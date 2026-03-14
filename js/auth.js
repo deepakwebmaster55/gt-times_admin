@@ -1,28 +1,16 @@
-const firebaseConfig = (window.GT_ADMIN_CONFIG || {}).firebase || {};
+const requireAdminAuth = async (onAuthed) => {
+  if (!window.gtSupabase1) return;
 
-let firebaseApp = null;
-let firebaseAuth = null;
-
-if (firebaseConfig.apiKey) {
-  firebaseApp = firebase.initializeApp(firebaseConfig);
-  firebaseAuth = firebase.auth();
-}
-
-window.gtFirebaseAuth = firebaseAuth;
-
-const requireAdminAuth = (onAuthed) => {
-  if (!firebaseAuth) {
+  const { data } = await window.gtSupabase1.auth.getSession();
+  const session = data?.session;
+  if (!session) {
+    window.location.href = "login.html";
     return;
   }
-  firebaseAuth.onAuthStateChanged((user) => {
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
-    if (typeof onAuthed === "function") {
-      onAuthed(user);
-    }
-  });
+
+  if (typeof onAuthed === "function") {
+    onAuthed(session.user);
+  }
 };
 
 window.requireAdminAuth = requireAdminAuth;

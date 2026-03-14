@@ -8,76 +8,87 @@ const setReviewStatus = (message) => {
 };
 
 const clearReviewForm = () => {
+  if (!reviewForm) return;
   reviewForm.reset();
   document.querySelector("#review-id").value = "";
   document.querySelector("#review-active").checked = true;
 };
 
-const loadReviews = async () => {\n  window.setAdminLoading?.(true);\n  window.renderSkeletonRows?.(reviewTableBody, 4, 4);
-  if (!window.gtSupabase2) {
-    setReviewStatus("Supabase 2 keys missing in admin/js/config.js");
-    return;
-  }
-  const { data, error } = await window.gtSupabase2
-    .from("reviews")
-    .select("*")
-    .order("created_at", { ascending: false });
+const loadReviews = async () => {
+  window.setAdminLoading?.(true);
+  window.renderSkeletonRows?.(reviewTableBody, 4, 4);
+  try {
+    if (!window.gtSupabase2) {
+      setReviewStatus("Supabase 2 keys missing in admin/js/config.js");
+      return;
+    }
+    const { data, error } = await window.gtSupabase2
+      .from("reviews")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    setReviewStatus(error.message);
-    return;
-  }
+    if (error) {
+      setReviewStatus(error.message);
+      return;
+    }
 
-  reviewTableBody.innerHTML = "";
-  (data || []).forEach((review) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${review.name || ""}</td>
-      <td>${review.rating || ""}</td>
-      <td><span class="badge">${review.is_active ? "Active" : "Inactive"}</span></td>
-      <td>
-        <div class="actions-row">
-          <button class="btn secondary" data-edit="${review.id}">Edit</button>
-          <button class="btn link" data-delete="${review.id}">Delete</button>
-        </div>
-      </td>
-    `;
-    reviewTableBody.appendChild(row);
-  });
-
-  reviewTableBody.querySelectorAll("[data-edit]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-edit");
-      const { data, error } = await window.gtSupabase2
-        .from("reviews")
-        .select("*")
-        .eq("id", id)
-        .single();
-      if (error) {
-        setReviewStatus(error.message);
-        return;
-      }
-      document.querySelector("#review-id").value = data.id || "";
-      document.querySelector("#review-name").value = data.name || "";
-      document.querySelector("#review-email").value = data.email || "";
-      document.querySelector("#review-rating").value = data.rating || "";
-      document.querySelector("#review-feedback").value = data.feedback || "";
-      document.querySelector("#review-active").checked = data.is_active !== false;
+    reviewTableBody.innerHTML = "";
+    (data || []).forEach((review) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${review.name || ""}</td>
+        <td>${review.rating || ""}</td>
+        <td><span class="badge">${review.is_active ? "Active" : "Inactive"}</span></td>
+        <td>
+          <div class="actions-row">
+            <button class="btn secondary" data-edit="${review.id}">Edit</button>
+            <button class="btn link" data-delete="${review.id}">Delete</button>
+          </div>
+        </td>
+      `;
+      reviewTableBody.appendChild(row);
     });
-  });
 
-  reviewTableBody.querySelectorAll("[data-delete]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-delete");
-      if (!confirm("Delete this review?")) return;
-      const { error } = await window.gtSupabase2.from("reviews").delete().eq("id", id);
-      if (error) {
-        setReviewStatus(error.message);
-        return;
-      }
-      loadReviews();\nwindow.setAdminLoading?.(false);
+    reviewTableBody.querySelectorAll("[data-edit]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-edit");
+        const { data: row, error: rowError } = await window.gtSupabase2
+          .from("reviews")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (rowError) {
+          setReviewStatus(rowError.message);
+          return;
+        }
+        document.querySelector("#review-id").value = row.id || "";
+        document.querySelector("#review-name").value = row.name || "";
+        document.querySelector("#review-email").value = row.email || "";
+        document.querySelector("#review-rating").value = row.rating || "";
+        document.querySelector("#review-feedback").value = row.feedback || "";
+        document.querySelector("#review-active").checked = row.is_active !== false;
+      });
     });
-  });
+
+    reviewTableBody.querySelectorAll("[data-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-delete");
+        if (!confirm("Delete this review?")) return;
+        try {
+          await window.callSupabase2AdminFunction("admin-reviews", {
+            action: "delete",
+            id
+          });
+          window.showToast?.("Review deleted.");
+          loadReviews();
+        } catch (error) {
+          setReviewStatus(error.message || "Delete failed.");
+        }
+      });
+    });
+  } finally {
+    window.setAdminLoading?.(false);
+  }
 };
 
 if (reviewForm) {
@@ -102,14 +113,21 @@ if (reviewForm) {
       return;
     }
 
-    const { error } = await window.gtSupabase2.from("reviews").upsert(payload);
-    if (error) {
-      setReviewStatus(error.message);
-      return;
+    window.setAdminLoading?.(true);
+    try {
+      await window.callSupabase2AdminFunction("admin-reviews", {
+        action: "upsert",
+        review: payload
+      });
+      setReviewStatus("Review saved.");
+      window.showToast?.("Review saved.");
+      clearReviewForm();
+      loadReviews();
+    } catch (error) {
+      setReviewStatus(error.message || "Save failed.");
+    } finally {
+      window.setAdminLoading?.(false);
     }
-    setReviewStatus("Review saved.");\n    window.showToast?.("Review saved.");
-    clearReviewForm();
-    loadReviews();\nwindow.setAdminLoading?.(false);
   });
 }
 
@@ -117,5 +135,4 @@ if (reviewReset) {
   reviewReset.addEventListener("click", clearReviewForm);
 }
 
-loadReviews();\nwindow.setAdminLoading?.(false);
-
+loadReviews();

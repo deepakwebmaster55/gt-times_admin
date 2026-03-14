@@ -18,7 +18,7 @@
   <main class="container" style="padding:2rem 0;">
     <div class="card" style="max-width:480px; margin:0 auto;">
       <h2>Admin Sign In</h2>
-      <p class="small">Use the admin email and password created in Firebase Auth.</p>
+      <p class="small">Use the admin email and password created in Supabase Auth.</p>
       <form class="form-grid" id="login-form">
         <div>
           <label for="email">Email</label>
@@ -34,31 +34,28 @@
     </div>
   </main>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/supabase.js"></script>
   <script>
     const loginForm = document.getElementById("login-form");
     const statusEl = document.getElementById("login-status");
 
     if (loginForm) {
-      loginForm.addEventListener("submit", (event) => {
+      loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value.trim();
-        if (!window.gtFirebaseAuth) {
-          statusEl.textContent = "Firebase config missing in admin/js/config.js";
+        if (!window.gtSupabase1) {
+          statusEl.textContent = "Supabase keys missing in admin/js/config.js";
           return;
         }
-        window.gtFirebaseAuth
-          .signInWithEmailAndPassword(email, password)
-          .then(() => {
-            window.location.href = "index.html";
-          })
-          .catch((error) => {
-            statusEl.textContent = error.message;
-          });
+        const { error } = await window.gtSupabase1.auth.signInWithPassword({ email, password });
+        if (error) {
+          statusEl.textContent = error.message;
+          return;
+        }
+        window.location.href = "index.html";
       });
     }
   </script>

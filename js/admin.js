@@ -43,11 +43,10 @@ const renderSkeletonRows = (tbody, columns = 3, rows = 4) => {
 
 const setupAdminShell = () => {
   const logoutBtn = document.querySelector("[data-admin-logout]");
-  if (logoutBtn && window.gtFirebaseAuth) {
-    logoutBtn.addEventListener("click", () => {
-      window.gtFirebaseAuth.signOut().then(() => {
-        window.location.href = "login.html";
-      });
+  if (logoutBtn && window.gtSupabase1) {
+    logoutBtn.addEventListener("click", async () => {
+      await window.gtSupabase1.auth.signOut();
+      window.location.href = "login.html";
     });
   }
 };
@@ -90,4 +89,3 @@ document.addEventListener("DOMContentLoaded", () => {
 window.setAdminLoading = setAdminLoading;
 window.showToast = showToast;
 window.renderSkeletonRows = renderSkeletonRows;
-
