@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Glamtreasure Admin</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body data-admin-guard>
+  <header class="admin-header">
+    <div class="container">
+      <div class="brand">
+        <span>Glamtreasure Admin</span>
+      </div>
+      <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+        <button class="btn secondary" data-admin-logout>Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:2rem 0;">
+    <div class="card" style="margin-bottom:1.2rem;">
+      <h2>What do you want to edit?</h2>
+      <p class="small">Choose a section below to manage products, homepage sliders, categories, blogs, or reviews.</p>
+      <div class="nav-links" style="margin-top:0.8rem;">
+        <a href="products.html">Products</a>
+        <a href="mainpage.html">Main Page</a>
+        <a href="categories.html">Categories</a>
+        <a href="blog.html">Blog</a>
+        <a href="reviews.html">Reviews</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.2rem;">
+      <h2>Database Overview</h2>
+      <p class="small">Total records across each Supabase project.</p>
+      <div class="admin-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="card" style="box-shadow:none;">
+          <h3>Supabase 1</h3>
+          <p class="small">Products, home sliders, categories, blog</p>
+          <div class="badge">Total records: <span data-db1-count>0</span></div>
+        </div>
+        <div class="card" style="box-shadow:none;">
+          <h3>Supabase 2</h3>
+          <p class="small">Reviews, offers</p>
+          <div class="badge">Total records: <span data-db2-count>0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="card">
+        <h3>Products</h3>
+        <p class="small">Add, edit, delete products and assign them to homepage sliders.</p>
+        <a class="btn" href="products.html">Manage Products</a>
+      </div>
+      <div class="card">
+        <h3>Main Page</h3>
+        <p class="small">Edit hero slider, featured sliders, and signature showcase.</p>
+        <a class="btn" href="mainpage.html">Manage Homepage</a>
+      </div>
+      <div class="card">
+        <h3>Categories</h3>
+        <p class="small">Add or delete categories and assign products.</p>
+        <a class="btn" href="categories.html">Manage Categories</a>
+      </div>
+      <div class="card">
+        <h3>Blog</h3>
+        <p class="small">Publish or remove blog entries.</p>
+        <a class="btn" href="blog.html">Manage Blog</a>
+      </div>
+      <div class="card">
+        <h3>Reviews</h3>
+        <p class="small">Add reviews (customers cannot add directly).</p>
+        <a class="btn" href="reviews.html">Manage Reviews</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Categories | Glamtreasure</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body data-admin-guard>
+  <header class="admin-header">
+    <div class="container">
+      <div class="brand"><span>Glamtreasure Admin</span></div>
+      <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+<a class="btn secondary" href="index.html">Dashboard</a>
+        <button class="btn secondary" data-admin-logout>Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:2rem 0;">
+    <div class="card" style="margin-bottom:1.2rem;">
+      <h2>Categories</h2>
+      <p class="small">Create or remove categories and assign products to a category.</p>
+    </div>
+
+    <div class="admin-grid" style="grid-template-columns: 1.1fr 1fr;">
+      <div class="card">
+        <h3>Category Form</h3>
+        <form class="form-grid" id="category-form">
+          <input type="hidden" id="category-id" />
+          <div>
+            <label for="category-name">Name</label>
+            <input type="text" id="category-name" required />
+          </div>
+          <div>
+            <label for="category-slug">Slug</label>
+            <input type="text" id="category-slug" placeholder="shades" required />
+          </div>
+          <div>
+            <label for="category-image">Image URL</label>
+            <input type="text" id="category-image" />
+          </div>
+          <div>
+            <label for="category-desc">Description</label>
+            <textarea id="category-desc"></textarea>
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" id="category-active" checked /> Active
+            </label>
+          </div>
+          <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+<button class="btn" type="submit">Save Category</button>
+            <button class="btn secondary" type="button" id="category-reset">Clear</button>
+          </div>
+          <p class="small" id="category-status"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Existing Categories</h3>
+        <div style="overflow:auto;">
+          <table class="table" id="category-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.2rem;">
+      <h3>Assign Products to Category</h3>
+      <div class="form-grid">
+        <div>
+          <label for="assign-category">Select Category</label>
+          <select id="assign-category"></select>
+        </div>
+      </div>
+      <div style="overflow:auto; margin-top:0.8rem;">
+        <table class="table" id="assign-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>In Category</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="small" id="assign-status"></p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/categories.js"></script>
+</body>
+</html>
+
+

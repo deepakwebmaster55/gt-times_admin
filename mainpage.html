@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Main Page | Glamtreasure</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body data-admin-guard>
+  <header class="admin-header">
+    <div class="container">
+      <div class="brand"><span>Glamtreasure Admin</span></div>
+      <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+<a class="btn secondary" href="index.html">Dashboard</a>
+        <button class="btn secondary" data-admin-logout>Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:2rem 0;">
+    <div class="card" style="margin-bottom:1.2rem;">
+      <h2>Main Page</h2>
+      <p class="small">Update hero slider, carousels, and the signature watch showcase. Use 1400 x 900 images to avoid text overlap.</p>
+      <p class="notice">Hero slider uses the Home Slider form below. Product sliders are controlled by each product's Home Sections.</p>
+    </div>
+
+    <div class="admin-grid" style="grid-template-columns: 1.1fr 1fr;">
+      <div class="card">
+        <h3>Hero Slider (Home Slider)</h3>
+        <form class="form-grid" id="hero-form">
+          <input type="hidden" id="hero-id" />
+          <div>
+            <label for="hero-eyebrow">Eyebrow</label>
+            <input type="text" id="hero-eyebrow" />
+          </div>
+          <div>
+            <label for="hero-title">Title</label>
+            <input type="text" id="hero-title" required />
+          </div>
+          <div>
+            <label for="hero-subtitle">Subtitle</label>
+            <input type="text" id="hero-subtitle" />
+          </div>
+          <div>
+            <label for="hero-image">Image URL</label>
+            <input type="text" id="hero-image" required />
+          </div>
+          <div>
+            <label for="hero-primary-label">Primary Button Label</label>
+            <input type="text" id="hero-primary-label" />
+          </div>
+          <div>
+            <label for="hero-primary-link">Primary Button Link</label>
+            <input type="text" id="hero-primary-link" />
+          </div>
+          <div>
+            <label for="hero-secondary-label">Secondary Button Label</label>
+            <input type="text" id="hero-secondary-label" />
+          </div>
+          <div>
+            <label for="hero-secondary-link">Secondary Button Link</label>
+            <input type="text" id="hero-secondary-link" />
+          </div>
+          <div>
+            <label for="hero-order">Order</label>
+            <input type="number" id="hero-order" value="0" />
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" id="hero-active" checked /> Active
+            </label>
+          </div>
+          <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+<button class="btn" type="submit">Save Slide</button>
+            <button class="btn secondary" type="button" id="hero-reset">Clear</button>
+          </div>
+          <p class="small" id="hero-status"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Hero Slider List</h3>
+        <div style="overflow:auto;">
+          <table class="table" id="hero-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.2rem;">
+      <h3>Product Sliders & Signature Showcase</h3>
+      <p class="small">Toggle sections for each product. Use signature_showcase to show in the Royal Crown style slider.</p>
+      <div style="overflow:auto;">
+        <table class="table" id="section-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Featured</th>
+              <th>New Arrivals</th>
+              <th>Bestseller</th>
+              <th>Premium Choice</th>
+              <th>Signature Showcase</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="small" id="section-status"></p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/mainpage.js"></script>
+</body>
+</html>
+
+

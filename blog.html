@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Blog | Glamtreasure</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body data-admin-guard>
+  <header class="admin-header">
+    <div class="container">
+      <div class="brand"><span>Glamtreasure Admin</span></div>
+      <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+<a class="btn secondary" href="index.html">Dashboard</a>
+        <button class="btn secondary" data-admin-logout>Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:2rem 0;">
+    <div class="card" style="margin-bottom:1.2rem;">
+      <h2>Blog</h2>
+      <p class="small">Add or remove blog entries. Use URL to link to any blog page.</p>
+    </div>
+
+    <div class="admin-grid" style="grid-template-columns: 1.1fr 1fr;">
+      <div class="card">
+        <h3>Blog Form</h3>
+        <form class="form-grid" id="blog-form">
+          <input type="hidden" id="blog-id" />
+          <div>
+            <label for="blog-title">Title</label>
+            <input type="text" id="blog-title" required />
+          </div>
+          <div>
+            <label for="blog-slug">Slug</label>
+            <input type="text" id="blog-slug" placeholder="watch-care" required />
+          </div>
+          <div>
+            <label for="blog-url">Link URL</label>
+            <input type="text" id="blog-url" placeholder="blog-watch-care.html" />
+          </div>
+          <div>
+            <label for="blog-summary">Summary</label>
+            <textarea id="blog-summary"></textarea>
+          </div>
+          <div>
+            <label for="blog-image">Image URL</label>
+            <input type="text" id="blog-image" />
+          </div>
+          <div>
+            <label for="blog-date">Publish Date</label>
+            <input type="date" id="blog-date" />
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" id="blog-active" checked /> Active
+            </label>
+          </div>
+          <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+<button class="btn" type="submit">Save Blog</button>
+            <button class="btn secondary" type="button" id="blog-reset">Clear</button>
+          </div>
+          <p class="small" id="blog-status"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Existing Blogs</h3>
+        <div style="overflow:auto;">
+          <table class="table" id="blog-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/blog.js"></script>
+</body>
+</html>
+
+
