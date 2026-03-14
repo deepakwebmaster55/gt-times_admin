@@ -76,12 +76,12 @@
           </div>
           <div>
             <label for="main-image">Main Product Image</label>
-            <input type="file" id="main-image" accept="image/*" />
+            <input type="file" id="main-image" accept="image/png,image/jpeg,image/webp" />
             <div class="small" id="main-image-status"></div>
           </div>
           <div>
             <label for="gallery-images">Gallery Images (up to 5)</label>
-            <input type="file" id="gallery-images" accept="image/*" multiple />
+            <input type="file" id="gallery-images" accept="image/png,image/jpeg,image/webp" multiple />
             <div class="small" id="gallery-status"></div>
           </div>
           <div>
@@ -93,9 +93,19 @@
             <input type="text" id="colors" placeholder="Gold, Silver, Blue" />
           </div>
           <div>
+            <label>Color Images (1 image per color)</label>
+            <div id="color-image-fields" class="custom-fields"></div>
+            <p class="small">Add a photo for each color so clicking the color changes the image on the site.</p>
+          </div>
+          <div>
             <label for="home_sections">Home Sections</label>
             <input type="text" id="home_sections" placeholder="featured, new_arrivals, bestseller" />
             <p class="small">Use: featured, new_arrivals, bestseller, premium_choice, signature_showcase</p>
+          </div>          <div>
+            <label>Additional Fields</label>
+            <div id="custom-fields" class="custom-fields"></div>
+            <button class="btn secondary" type="button" id="add-custom-field">Add Field</button>
+            <p class="small">Add extra specs like Strap, Weight, Material, Size, Warranty, etc.</p>
           </div>
           <div>
             <label>
@@ -136,5 +146,8 @@
   <script src="js/admin.js"></script>  <script src="js/products.js"></script>
 </body>
 </html>
+
+
+
 
 

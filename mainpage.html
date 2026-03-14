@@ -43,8 +43,10 @@
             <input type="text" id="hero-subtitle" />
           </div>
           <div>
-            <label for="hero-image">Image URL</label>
-            <input type="text" id="hero-image" required />
+            <label for="hero-image">Image</label>
+            <input type="file" id="hero-image" accept="image/*" required />
+            <div class="small" id="hero-image-status"></div>
+            <div class="small" id="hero-image-preview"></div>
           </div>
           <div>
             <label for="hero-primary-label">Primary Button Label</label>
@@ -127,6 +129,9 @@
   <script src="js/admin.js"></script>  <script src="js/mainpage.js"></script>
 </body>
 </html>
+
+
+
 
 
 

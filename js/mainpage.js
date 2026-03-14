@@ -4,6 +4,12 @@ const heroReset = document.querySelector("#hero-reset");
 const heroStatus = document.querySelector("#hero-status");
 const sectionTableBody = document.querySelector("#section-table tbody");
 const sectionStatus = document.querySelector("#section-status");
+const heroImageInput = document.querySelector("#hero-image");
+const heroImageStatus = document.querySelector("#hero-image-status");
+const heroImagePreview = document.querySelector("#hero-image-preview");
+
+const STORAGE_BUCKET = "product-images";
+let heroImageUrl = "";
 
 const setHeroStatus = (message) => {
   if (heroStatus) heroStatus.textContent = message;
@@ -13,13 +19,49 @@ const setSectionStatus = (message) => {
   if (sectionStatus) sectionStatus.textContent = message;
 };
 
+const setImageStatus = (message) => {
+  if (heroImageStatus) heroImageStatus.textContent = message;
+};
+
+const renderImagePreview = () => {
+  if (!heroImagePreview) return;
+  if (!heroImageUrl) {
+    heroImagePreview.textContent = "No image uploaded yet.";
+    return;
+  }
+  heroImagePreview.innerHTML = `Current image: <a href="${heroImageUrl}" target="_blank" rel="noopener">${heroImageUrl}</a>`;
+};
+
+const sanitizeFileName = (name) => name.replace(/[^a-z0-9._-]/gi, "_");
+
+const uploadToStorage = async (file, slug) => {
+  if (!window.gtSupabase1) return "";
+  const fileName = sanitizeFileName(file.name);
+  const path = `hero/${slug}/${Date.now()}_${fileName}`;
+  const { error } = await window.gtSupabase1.storage.from(STORAGE_BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: true
+  });
+  if (error) {
+    setHeroStatus(error.message);
+    return "";
+  }
+  const { data } = window.gtSupabase1.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return data?.publicUrl || "";
+};
+
 const clearHeroForm = () => {
   heroForm.reset();
   document.querySelector("#hero-id").value = "";
   document.querySelector("#hero-active").checked = true;
+  heroImageUrl = "";
+  if (heroImageInput) heroImageInput.value = "";
+  renderImagePreview();
 };
 
-const loadHeroSlides = async () => {\n  window.setAdminLoading?.(true);\n  window.renderSkeletonRows?.(heroTableBody, 4, 3);
+const loadHeroSlides = async () => {
+  window.setAdminLoading?.(true);
+  window.renderSkeletonRows?.(heroTableBody, 4, 3);
   if (!window.gtSupabase1) {
     setHeroStatus("Supabase 1 keys missing in admin/js/config.js");
     return;
@@ -67,13 +109,14 @@ const loadHeroSlides = async () => {\n  window.setAdminLoading?.(true);\n  windo
       document.querySelector("#hero-eyebrow").value = data.eyebrow || "";
       document.querySelector("#hero-title").value = data.title || "";
       document.querySelector("#hero-subtitle").value = data.subtitle || "";
-      document.querySelector("#hero-image").value = data.image_url || "";
       document.querySelector("#hero-primary-label").value = data.primary_cta_label || "";
       document.querySelector("#hero-primary-link").value = data.primary_cta_link || "";
       document.querySelector("#hero-secondary-label").value = data.secondary_cta_label || "";
       document.querySelector("#hero-secondary-link").value = data.secondary_cta_link || "";
       document.querySelector("#hero-order").value = data.order_index ?? 0;
       document.querySelector("#hero-active").checked = data.is_active !== false;
+      heroImageUrl = data.image_url || "";
+      renderImagePreview();
     });
   });
 
@@ -86,10 +129,26 @@ const loadHeroSlides = async () => {\n  window.setAdminLoading?.(true);\n  windo
         setHeroStatus(error.message);
         return;
       }
-      loadHeroSlides();\nwindow.setAdminLoading?.(false);
+      loadHeroSlides();
+      window.setAdminLoading?.(false);
     });
   });
 };
+
+if (heroImageInput) {
+  heroImageInput.addEventListener("change", async () => {
+    if (!heroImageInput.files?.length) return;
+    const slug = document.querySelector("#hero-title").value.trim() || "hero";
+    setImageStatus("Uploading image...");
+    const url = await uploadToStorage(heroImageInput.files[0], slug);
+    if (url) {
+      heroImageUrl = url;
+      setImageStatus("Image uploaded.");
+      window.showToast?.("Image uploaded.");
+    }
+    renderImagePreview();
+  });
+}
 
 if (heroForm) {
   heroForm.addEventListener("submit", async (event) => {
@@ -103,7 +162,7 @@ if (heroForm) {
       eyebrow: document.querySelector("#hero-eyebrow").value.trim(),
       title: document.querySelector("#hero-title").value.trim(),
       subtitle: document.querySelector("#hero-subtitle").value.trim(),
-      image_url: document.querySelector("#hero-image").value.trim(),
+      image_url: heroImageUrl,
       primary_cta_label: document.querySelector("#hero-primary-label").value.trim(),
       primary_cta_link: document.querySelector("#hero-primary-link").value.trim(),
       secondary_cta_label: document.querySelector("#hero-secondary-label").value.trim(),
@@ -113,7 +172,7 @@ if (heroForm) {
     };
 
     if (!payload.title || !payload.image_url) {
-      setHeroStatus("Title and image URL are required.");
+      setHeroStatus("Title and image are required.");
       return;
     }
 
@@ -122,9 +181,11 @@ if (heroForm) {
       setHeroStatus(error.message);
       return;
     }
-    setHeroStatus("Slide saved.");\n    window.showToast?.("Slide saved.");
+    setHeroStatus("Slide saved.");
+    window.showToast?.("Slide saved.");
     clearHeroForm();
-    loadHeroSlides();\nwindow.setAdminLoading?.(false);
+    loadHeroSlides();
+    window.setAdminLoading?.(false);
   });
 }
 
@@ -160,10 +221,12 @@ const toggleSection = async (productId, sectionKey, enabled) => {
     setSectionStatus(updateError.message);
     return;
   }
-  setSectionStatus("Sections updated.");\n  window.showToast?.("Sections updated.");
+  setSectionStatus("Sections updated.");
+  window.showToast?.("Sections updated.");
 };
 
-const loadSectionTable = async () => {\n  window.renderSkeletonRows?.(sectionTableBody, 6, 4);
+const loadSectionTable = async () => {
+  window.renderSkeletonRows?.(sectionTableBody, 6, 4);
   if (!window.gtSupabase1) {
     setSectionStatus("Supabase 1 keys missing in admin/js/config.js");
     return;
@@ -202,7 +265,6 @@ const loadSectionTable = async () => {\n  window.renderSkeletonRows?.(sectionTab
   });
 };
 
-loadHeroSlides();\nwindow.setAdminLoading?.(false);\nloadSectionTable();
-
-
-
+loadHeroSlides();
+window.setAdminLoading?.(false);
+loadSectionTable();

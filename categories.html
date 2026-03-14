@@ -38,8 +38,10 @@
             <input type="text" id="category-slug" placeholder="shades" required />
           </div>
           <div>
-            <label for="category-image">Image URL</label>
-            <input type="text" id="category-image" />
+            <label for="category-image">Image</label>
+            <input type="file" id="category-image" accept="image/*" />
+            <div class="small" id="category-image-status"></div>
+            <div class="small" id="category-image-preview"></div>
           </div>
           <div>
             <label for="category-desc">Description</label>
@@ -107,6 +109,9 @@
   <script src="js/admin.js"></script>  <script src="js/categories.js"></script>
 </body>
 </html>
+
+
+
 
 
 

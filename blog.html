@@ -46,8 +46,10 @@
             <textarea id="blog-summary"></textarea>
           </div>
           <div>
-            <label for="blog-image">Image URL</label>
-            <input type="text" id="blog-image" />
+            <label for="blog-image">Image</label>
+            <input type="file" id="blog-image" accept="image/*" />
+            <div class="small" id="blog-image-status"></div>
+            <div class="small" id="blog-image-preview"></div>
           </div>
           <div>
             <label for="blog-date">Publish Date</label>
@@ -92,6 +94,9 @@
   <script src="js/admin.js"></script>  <script src="js/blog.js"></script>
 </body>
 </html>
+
+
+
 
 
 

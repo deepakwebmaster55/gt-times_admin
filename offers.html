@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Offers | Glamtreasure</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body data-admin-guard>
+  <header class="admin-header">
+    <div class="container">
+      <div class="brand"><span>Glamtreasure Admin</span></div>
+      <div class="actions-row">
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+        <a class="btn secondary" href="index.html">Dashboard</a>
+        <button class="btn secondary" data-admin-logout>Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding:2rem 0;">
+    <div class="card" style="margin-bottom:1.2rem;">
+      <h2>Offers</h2>
+      <p class="small">Create discount or buy-one-get-one style offers. Assign products and quantities below.</p>
+    </div>
+
+    <div class="admin-grid" style="grid-template-columns: 1.1fr 1fr;">
+      <div class="card">
+        <h3>Offer Form</h3>
+        <form class="form-grid" id="offer-form">
+          <input type="hidden" id="offer-id" />
+          <div>
+            <label for="offer-title">Title</label>
+            <input type="text" id="offer-title" required />
+          </div>
+          <div>
+            <label for="offer-description">Description</label>
+            <textarea id="offer-description"></textarea>
+          </div>
+          <div>
+            <label for="offer-badge">Badge</label>
+            <input type="text" id="offer-badge" placeholder="Limited, Festive, Hot" />
+          </div>
+          <div>
+            <label for="offer-code">Coupon Code</label>
+            <input type="text" id="offer-code" placeholder="SAVE500" />
+          </div>
+          <div>
+            <label for="offer-type">Offer Type</label>
+            <select id="offer-type">
+              <option value="discount">Discount</option>
+              <option value="bogo">Buy One Get One</option>
+            </select>
+          </div>
+
+          <div class="offer-block" data-offer-block="discount">
+            <label for="discount-product">Discount Product</label>
+            <select id="discount-product"></select>
+            <div class="custom-field-row" style="margin-top:0.6rem;">
+              <select id="discount-type">
+                <option value="percent">Percent (%)</option>
+                <option value="amount">Flat Amount (Rs.)</option>
+              </select>
+              <input type="number" id="discount-value" placeholder="10" />
+              <span class="small">Value</span>
+            </div>
+          </div>
+
+          <div class="offer-block" data-offer-block="bogo" style="display:none;">
+            <div>
+              <label>Buy</label>
+              <div class="custom-field-row">
+                <input type="number" id="buy-qty" placeholder="Qty" value="1" min="1" />
+                <select id="buy-product"></select>
+                <span class="small">product</span>
+              </div>
+            </div>
+            <div style="margin-top:0.6rem;">
+              <label>Get</label>
+              <div class="custom-field-row">
+                <input type="number" id="get-qty" placeholder="Qty" value="1" min="1" />
+                <select id="get-product"></select>
+                <span class="small">product</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label>
+              <input type="checkbox" id="offer-active" checked /> Active
+            </label>
+          </div>
+          <div class="actions-row">
+            <button class="btn" type="submit">Save Offer</button>
+            <button class="btn secondary" type="button" id="offer-reset">Clear</button>
+          </div>
+          <p class="small" id="offer-status"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Existing Offers</h3>
+        <div style="overflow:auto;">
+          <table class="table" id="offer-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/offers.js"></script>
+</body>
+</html>
+
+

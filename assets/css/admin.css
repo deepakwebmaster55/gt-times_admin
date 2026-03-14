@@ -199,6 +199,15 @@ textarea {
   .nav-links {
     justify-content: flex-start;
   }
+
+  header.admin-header .container {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .actions-row {
+    width: 100%;
+  }
 }
 /* Admin loader + toast */
 .admin-loader {
@@ -262,5 +271,82 @@ textarea {
 @keyframes gt-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+.custom-fields {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.custom-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.custom-field-row .btn.link {
+  padding: 0.3rem 0.6rem;
+}
+
+.color-image-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.color-image-row img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: min(1140px, 94vw);
+  }
+
+  .admin-header .container {
+    gap: 0.6rem;
+  }
+
+  .brand {
+    font-size: 1.05rem;
+  }
+
+  .btn {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .nav-links a {
+    font-size: 0.8rem;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.82rem;
+    padding: 0.45rem;
+  }
+
+  .card {
+    padding: 0.9rem;
+  }
+
+  .toast {
+    right: 0.8rem;
+    bottom: 0.8rem;
+    font-size: 0.82rem;
+  }
+
+  .custom-field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .color-image-row {
+    grid-template-columns: 1fr;
   }
 }
