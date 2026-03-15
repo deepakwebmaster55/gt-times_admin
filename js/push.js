@@ -82,6 +82,21 @@
     return true;
   };
 
+  const syncButtonState = async () => {
+    if (!btn) return;
+    if (!("serviceWorker" in navigator)) return;
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("./");
+      const sub = registration ? await registration.pushManager.getSubscription() : null;
+      if (sub) {
+        btn.disabled = true;
+        btn.textContent = "Notifications Enabled";
+      }
+    } catch (error) {
+      // Ignore state errors.
+    }
+  };
+
   if (btn) {
     btn.addEventListener("click", async () => {
       setStatus("Enabling notifications...");
@@ -110,5 +125,11 @@
         setStatus(error.message || "Unable to send test notification.", true);
       }
     });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncButtonState);
+  } else {
+    syncButtonState();
   }
 })();
