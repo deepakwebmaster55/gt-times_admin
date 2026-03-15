@@ -25,6 +25,7 @@
   const ensureServiceWorker = async () => {
     if (!("serviceWorker" in navigator)) throw new Error("Service workers not supported.");
     const registration = await navigator.serviceWorker.register("sw.js", { scope: "./" });
+    await navigator.serviceWorker.ready;
     return registration;
   };
 
