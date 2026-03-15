@@ -12,6 +12,6 @@ window.GT_ADMIN_CONFIG = {
     url: "https://ipiratzvtshdkcgalzju.supabase.co",
     anonKey: "sb_publishable_z-fZhuxCvfZs3-0eJJhyKw_7uzzoAdG",
     functionsUrl: "https://ipiratzvtshdkcgalzju.supabase.co/functions/v1",
-    vapidPublicKey: "BHNl81_xbFtspJ_L8IaAxI4XINwS6LWnXyNmxykm2IZrF-bef639dW-XowFG2tBQ4QMvq4e78nVhVVZ8oC6qUuA"
+    vapidPublicKey: "BK94tH5OEWQ0TZpodrtZB_M39THVVgr4xAfD6Jzy5rwVW3f1KXvlkIN_mYcSUK6VpG4fLCPVmLIb0YF2k1nC0qU"
   }
 };
