@@ -11,6 +11,7 @@ window.GT_ADMIN_CONFIG = {
   supabase3: {
     url: "https://ipiratzvtshdkcgalzju.supabase.co",
     anonKey: "sb_publishable_z-fZhuxCvfZs3-0eJJhyKw_7uzzoAdG",
-    functionsUrl: "https://ipiratzvtshdkcgalzju.supabase.co/functions/v1"
+    functionsUrl: "https://ipiratzvtshdkcgalzju.supabase.co/functions/v1",
+    vapidPublicKey: "BHNl81_xbFtspJ_L8IaAxI4XINwS6LWnXyNmxykm2IZrF-bef639dW-XowFG2tBQ4QMvq4e78nVhVVZ8oC6qUuA"
   }
 };
