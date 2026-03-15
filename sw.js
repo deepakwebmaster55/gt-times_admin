@@ -1,5 +1,13 @@
 self.addEventListener("push", (event) => {
-  const data = event.data?.json?.() || {};
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (error) {
+      const text = event.data.text();
+      data = { body: text };
+    }
+  }
   const title = data.title || "New booking";
   const options = {
     body: data.body || "Tap to open admin bookings.",
