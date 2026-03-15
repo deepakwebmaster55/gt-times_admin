@@ -47,13 +47,19 @@
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value.trim();
         if (!window.gtSupabase1) {
-          statusEl.textContent = "Supabase keys missing in admin/js/config.js";
+          statusEl.textContent = "Supabase 1 keys missing in admin/js/config.js";
           return;
         }
         const { error } = await window.gtSupabase1.auth.signInWithPassword({ email, password });
         if (error) {
           statusEl.textContent = error.message;
           return;
+        }
+        if (window.gtSupabase3) {
+          const { error: db3Error } = await window.gtSupabase3.auth.signInWithPassword({ email, password });
+          if (db3Error) {
+            statusEl.textContent = "Logged in to Supabase 1. Supabase 3 login failed (create admin in Supabase 3 for bookings).";
+          }
         }
         window.location.href = "index.html";
       });

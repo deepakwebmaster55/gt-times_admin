@@ -180,6 +180,12 @@ textarea {
   font-size: 0.85rem;
 }
 
+.small code {
+  background: #eef5ff;
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+}
+
 .actions-row {
   display: flex;
   gap: 0.5rem;
@@ -349,4 +355,30 @@ textarea {
   .color-image-row {
     grid-template-columns: 1fr;
   }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #e9f1ff;
+  color: var(--primary-dark);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background: #fff5da;
+  color: #8a5a00;
+}
+
+.status-badge.success {
+  background: #e6f7ee;
+  color: #1a7d45;
+}
+
+.status-badge.danger {
+  background: #ffe3e3;
+  color: #b2362d;
 }

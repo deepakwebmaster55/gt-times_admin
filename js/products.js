@@ -25,6 +25,12 @@ const parseList = (value) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const normalizeList = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") return parseList(value);
+  return [];
+};
+
 const setStatus = (message) => {
   if (statusEl) statusEl.textContent = message;
 };
@@ -345,8 +351,8 @@ const fillForm = (product) => {
   document.querySelector("#short_desc").value = product.short_desc || "";
   document.querySelector("#description").value = product.description || "";
   document.querySelector("#stock").value = product.stock || "";
-  document.querySelector("#colors").value = (product.colors || []).join(", ");
-  document.querySelector("#home_sections").value = (product.home_sections || []).join(", ");
+  document.querySelector("#colors").value = normalizeList(product.colors).join(", ");
+  document.querySelector("#home_sections").value = normalizeList(product.home_sections).join(", ");
   document.querySelector("#is_active").checked = product.is_active !== false;
 
   mainImageUrl = (product.images || [])[0] || "";
