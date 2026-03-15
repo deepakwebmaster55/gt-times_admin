@@ -1,10 +1,18 @@
 ﻿const ordersStatus = document.querySelector("[data-orders-status]");
 const ordersBody = document.querySelector("[data-orders-body]");
+const ordersBadge = document.querySelector("[data-orders-badge]");
 
 const setOrdersStatus = (message, isError) => {
   if (!ordersStatus) return;
   ordersStatus.textContent = message;
   ordersStatus.style.color = isError ? "#c13a2e" : "";
+};
+
+const setBadge = (count) => {
+  if (!ordersBadge) return;
+  const value = Number(count || 0);
+  ordersBadge.textContent = String(value);
+  ordersBadge.style.display = value > 0 ? "inline-flex" : "none";
 };
 
 const formatDate = (value) => {
@@ -68,73 +76,73 @@ const renderOrders = (rows, profilesMap, addressMap, itemsMap, paymentsMap) => {
 };
 
 const loadOrders = async () => {
-  if (!window.gtSupabase3) {
-    setOrdersStatus("Supabase 3 keys missing in admin/js/config.js", true);
-    return;
-  }
-
-  const { data: sessionData } = await window.gtSupabase3.auth.getSession();
-  if (!sessionData?.session) {
-    setOrdersStatus("Login to Supabase 3 to view bookings.", true);
+  if (!window.callSupabase3AdminFunction) {
+    setOrdersStatus("Supabase 3 functions not configured.", true);
     return;
   }
 
   setOrdersStatus("Loading bookings...");
 
-  const { data: bookings, error } = await window.gtSupabase3
-    .from("bookings")
-    .select("id, order_number, total_amount, status, created_at, user_id, address_id, address_snapshot")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    setOrdersStatus(error.message, true);
+  const token = await window.getAdminAccessToken?.();
+  if (!token) {
+    setOrdersStatus("Admin session expired. Please login again.", true);
     return;
   }
 
-  const bookingIds = (bookings || []).map((row) => row.id);
-  const userIds = Array.from(new Set((bookings || []).map((row) => row.user_id).filter(Boolean)));
-
-  const [profilesRes, addressesRes, itemsRes, paymentsRes] = await Promise.all([
-    userIds.length
-      ? window.gtSupabase3.from("profiles").select("id, full_name, phone, email").in("id", userIds)
-      : Promise.resolve({ data: [] }),
-    userIds.length
-      ? window.gtSupabase3.from("addresses").select("*").in("user_id", userIds).order("is_default", { ascending: false })
-      : Promise.resolve({ data: [] }),
-    bookingIds.length
-      ? window.gtSupabase3.from("booking_items").select("booking_id, title, quantity, price").in("booking_id", bookingIds)
-      : Promise.resolve({ data: [] }),
-    bookingIds.length
-      ? window.gtSupabase3.from("payments").select("booking_id, status, transaction_id").in("booking_id", bookingIds)
-      : Promise.resolve({ data: [] })
-  ]);
-
-  const profilesMap = new Map();
-  (profilesRes.data || []).forEach((profile) => profilesMap.set(profile.id, profile));
-
-  const addressMap = new Map();
-  (addressesRes.data || []).forEach((address) => {
-    if (!addressMap.has(address.user_id)) {
-      addressMap.set(address.user_id, address);
+  try {
+    const response = await window.callSupabase3AdminFunction("admin-bookings", {}, token);
+    if (response?.error) {
+      setOrdersStatus(response.error, true);
+      return;
     }
-  });
 
-  const itemsMap = new Map();
-  (itemsRes.data || []).forEach((item) => {
-    const list = itemsMap.get(item.booking_id) || [];
-    list.push(item);
-    itemsMap.set(item.booking_id, list);
-  });
+    const bookings = response.bookings || [];
+    const profiles = response.profiles || [];
+    const addresses = response.addresses || [];
+    const items = response.items || [];
+    const payments = response.payments || [];
 
-  const paymentsMap = new Map();
-  (paymentsRes.data || []).forEach((payment) => {
-    paymentsMap.set(payment.booking_id, payment);
-  });
+    setBadge(bookings.length);
 
-  renderOrders(bookings || [], profilesMap, addressMap, itemsMap, paymentsMap);
-  setOrdersStatus("");
+    const lastSeen = localStorage.getItem("gt_admin_last_booking") || "";
+    const latestId = bookings[0]?.id || "";
+    if (latestId && latestId !== lastSeen) {
+      localStorage.setItem("gt_admin_last_booking", latestId);
+      if (typeof window.showToast === "function") {
+        window.showToast("New booking received.");
+      }
+    }
+
+    const profilesMap = new Map();
+    profiles.forEach((profile) => profilesMap.set(profile.id, profile));
+
+    const addressMap = new Map();
+    addresses.forEach((address) => {
+      if (!addressMap.has(address.user_id)) {
+        addressMap.set(address.user_id, address);
+      }
+    });
+
+    const itemsMap = new Map();
+    items.forEach((item) => {
+      const list = itemsMap.get(item.booking_id) || [];
+      list.push(item);
+      itemsMap.set(item.booking_id, list);
+    });
+
+    const paymentsMap = new Map();
+    payments.forEach((payment) => {
+      paymentsMap.set(payment.booking_id, payment);
+    });
+
+    renderOrders(bookings, profilesMap, addressMap, itemsMap, paymentsMap);
+    setOrdersStatus("");
+  } catch (error) {
+    setOrdersStatus(error.message || "Failed to load bookings.", true);
+  }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
   window.requireAdminAuth?.(loadOrders);
+  setInterval(loadOrders, 15000);
 });
