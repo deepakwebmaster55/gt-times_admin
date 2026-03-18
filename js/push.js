@@ -9,26 +9,6 @@
     statusEl.style.color = isError ? "#c13a2e" : "";
   };
 
-  const urlBase64ToUint8Array = (base64String) => {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; i += 1) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  };
-
-  const getVapidKey = () => window.GT_ADMIN_CONFIG?.supabase3?.vapidPublicKey || "";
-
-  const ensureServiceWorker = async () => {
-    if (!("serviceWorker" in navigator)) throw new Error("Service workers not supported.");
-    const registration = await navigator.serviceWorker.register("sw.js", { scope: "./" });
-    await navigator.serviceWorker.ready;
-    return registration;
-  };
-
   const subscribePush = async () => {
     if (!("Notification" in window)) {
       throw new Error("Notifications are not supported in this browser.");
@@ -37,36 +17,15 @@
     if (permission !== "granted") {
       throw new Error("Notification permission denied.");
     }
-
-    const vapidKey = getVapidKey();
-    if (!vapidKey) {
-      throw new Error("VAPID public key missing in admin/js/config.js");
+    if (window.PushRelay && typeof window.PushRelay.push === "function") {
+      window.PushRelay.push(["subscribe"]);
+      return true;
     }
-
-    const registration = await ensureServiceWorker();
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey)
-      });
+    if (window.pushrelay && typeof window.pushrelay.push === "function") {
+      window.pushrelay.push(["subscribe"]);
+      return true;
     }
-
-    const token = await window.getAdminAccessToken?.();
-    if (!token) {
-      throw new Error("Please login to admin first.");
-    }
-
-    const payload = {
-      action: "subscribe",
-      subscription
-    };
-
-    const response = await window.callSupabase3AdminFunction?.("admin-push", payload, token);
-    if (response?.error) {
-      throw new Error(response.error);
-    }
-
+    setStatus("Allow notifications in the browser prompt, then use the PushRelay bell to subscribe.", false);
     return true;
   };
 
@@ -84,17 +43,7 @@
 
   const syncButtonState = async () => {
     if (!btn) return;
-    if (!("serviceWorker" in navigator)) return;
-    try {
-      const registration = await navigator.serviceWorker.getRegistration("./");
-      const sub = registration ? await registration.pushManager.getSubscription() : null;
-      if (sub) {
-        btn.disabled = true;
-        btn.textContent = "Notifications Enabled";
-      }
-    } catch (error) {
-      // Ignore state errors.
-    }
+    if (!("Notification" in window)) return;
   };
 
   if (btn) {
@@ -103,11 +52,8 @@
       try {
         await subscribePush();
         setStatus("Notifications enabled for this device.", false);
-        btn.disabled = true;
         btn.textContent = "Notifications Enabled";
-        if (testBtn) {
-          testBtn.disabled = false;
-        }
+        if (testBtn) testBtn.disabled = false;
       } catch (error) {
         setStatus(error.message || "Unable to enable notifications.", true);
       }
