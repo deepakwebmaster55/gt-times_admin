@@ -18,19 +18,8 @@ const loadReviews = async () => {
   window.setAdminLoading?.(true);
   window.renderSkeletonRows?.(reviewTableBody, 4, 4);
   try {
-    if (!window.gtSupabase2) {
-      setReviewStatus("Supabase 2 keys missing in admin/js/config.js");
-      return;
-    }
-    const { data, error } = await window.gtSupabase2
-      .from("reviews")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      setReviewStatus(error.message);
-      return;
-    }
+    const response = await window.callSupabase2AdminFunction("admin-reviews", { action: "list" });
+    const data = response?.reviews || [];
 
     reviewTableBody.innerHTML = "";
     (data || []).forEach((review) => {
@@ -52,13 +41,10 @@ const loadReviews = async () => {
     reviewTableBody.querySelectorAll("[data-edit]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-edit");
-        const { data: row, error: rowError } = await window.gtSupabase2
-          .from("reviews")
-          .select("*")
-          .eq("id", id)
-          .single();
-        if (rowError) {
-          setReviewStatus(rowError.message);
+        const response = await window.callSupabase2AdminFunction("admin-reviews", { action: "get", id });
+        const row = response?.review;
+        if (!row) {
+          setReviewStatus("Review not found.");
           return;
         }
         document.querySelector("#review-id").value = row.id || "";

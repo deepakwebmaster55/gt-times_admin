@@ -11,6 +11,14 @@ const customFieldsWrap = document.querySelector("#custom-fields");
 const addCustomFieldBtn = document.querySelector("#add-custom-field");
 const colorImageFields = document.querySelector("#color-image-fields");
 const colorsInput = document.querySelector("#colors");
+const categoryHiddenInput = document.querySelector("#category");
+const categorySelect = document.querySelector("#category-select");
+const categoryTags = document.querySelector("#category-tags");
+const addCategoryTagBtn = document.querySelector("#add-category-tag");
+const homeSectionsHiddenInput = document.querySelector("#home_sections");
+const homeSectionsSelect = document.querySelector("#home-sections-select");
+const homeSectionTags = document.querySelector("#home-section-tags");
+const addSectionTagBtn = document.querySelector("#add-section-tag");
 
 const STORAGE_BUCKET = "product-images";
 
@@ -18,6 +26,9 @@ let mainImageUrl = "";
 let galleryUrls = [];
 let customFields = [];
 let colorImageMap = {};
+let categoriesCache = [];
+let selectedCategories = [];
+let selectedHomeSections = [];
 
 const parseList = (value) =>
   value
@@ -41,6 +52,69 @@ const setMainStatus = (message) => {
 
 const setGalleryStatus = (message) => {
   if (galleryStatus) galleryStatus.textContent = message;
+};
+
+const updateTagHiddenInput = (target, values) => {
+  if (!target) return;
+  target.value = values.join(", ");
+};
+
+const renderTagList = (wrap, values, removeHandler) => {
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  if (!values.length) {
+    wrap.innerHTML = "<span class=\"small\">No items selected yet.</span>";
+    return;
+  }
+  values.forEach((value, index) => {
+    const chip = document.createElement("span");
+    chip.className = "tag-chip";
+    chip.innerHTML = `
+      ${value}
+      <button type="button" data-remove="${index}" aria-label="Remove ${value}">×</button>
+    `;
+    wrap.appendChild(chip);
+  });
+  wrap.querySelectorAll("[data-remove]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const index = Number(btn.getAttribute("data-remove"));
+      removeHandler(index);
+    });
+  });
+};
+
+const addCategoryTag = (value) => {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return;
+  if (selectedCategories.some((item) => item.toLowerCase() === trimmed.toLowerCase())) return;
+  selectedCategories.push(trimmed);
+  updateTagHiddenInput(categoryHiddenInput, selectedCategories);
+  renderTagList(categoryTags, selectedCategories, (index) => {
+    selectedCategories.splice(index, 1);
+    updateTagHiddenInput(categoryHiddenInput, selectedCategories);
+    renderTagList(categoryTags, selectedCategories, (idx) => {
+      selectedCategories.splice(idx, 1);
+      updateTagHiddenInput(categoryHiddenInput, selectedCategories);
+      renderTagList(categoryTags, selectedCategories, () => {});
+    });
+  });
+};
+
+const addHomeSectionTag = (value) => {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return;
+  if (selectedHomeSections.includes(trimmed)) return;
+  selectedHomeSections.push(trimmed);
+  updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
+  renderTagList(homeSectionTags, selectedHomeSections, (index) => {
+    selectedHomeSections.splice(index, 1);
+    updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
+    renderTagList(homeSectionTags, selectedHomeSections, (idx) => {
+      selectedHomeSections.splice(idx, 1);
+      updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
+      renderTagList(homeSectionTags, selectedHomeSections, () => {});
+    });
+  });
 };
 
 const sanitizeFileName = (name) => name.replace(/[^a-z0-9._-]/gi, "_");
@@ -253,11 +327,17 @@ const clearForm = () => {
   galleryUrls = [];
   customFields = [];
   colorImageMap = {};
+  selectedCategories = [];
+  selectedHomeSections = [];
   if (mainImageInput) mainImageInput.value = "";
   if (galleryInput) galleryInput.value = "";
   renderImageList();
   renderCustomFields();
   renderColorImageFields([]);
+  updateTagHiddenInput(categoryHiddenInput, selectedCategories);
+  updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
+  renderTagList(categoryTags, selectedCategories, () => {});
+  renderTagList(homeSectionTags, selectedHomeSections, () => {});
 };
 
 const loadProducts = async () => {
@@ -280,6 +360,23 @@ const loadProducts = async () => {
 
   renderProducts(data || []);
   window.setAdminLoading?.(false);
+};
+
+const loadCategories = async () => {
+  if (!window.gtSupabase1 || !categorySelect) return;
+  const { data } = await window.gtSupabase1
+    .from("categories")
+    .select("name, slug")
+    .neq("is_active", false)
+    .order("name", { ascending: true });
+  categoriesCache = data || [];
+  categorySelect.innerHTML = "<option value=\"\">Select category</option>";
+  categoriesCache.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category.slug || category.name || "";
+    option.textContent = category.name || category.slug || "Category";
+    categorySelect.appendChild(option);
+  });
 };
 
 const renderProducts = (products) => {
@@ -343,7 +440,8 @@ const fillForm = (product) => {
   document.querySelector("#title").value = product.title || "";
   document.querySelector("#slug").value = product.slug || "";
   document.querySelector("#subtitle").value = product.subtitle || "";
-  document.querySelector("#category").value = product.category || "";
+  selectedCategories = normalizeList(product.category);
+  updateTagHiddenInput(categoryHiddenInput, selectedCategories);
   document.querySelector("#price").value = product.price || "";
   document.querySelector("#old_price").value = product.old_price || "";
   document.querySelector("#rating").value = product.rating || "";
@@ -352,7 +450,8 @@ const fillForm = (product) => {
   document.querySelector("#description").value = product.description || "";
   document.querySelector("#stock").value = product.stock || "";
   document.querySelector("#colors").value = normalizeList(product.colors).join(", ");
-  document.querySelector("#home_sections").value = normalizeList(product.home_sections).join(", ");
+  selectedHomeSections = normalizeList(product.home_sections);
+  updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
   document.querySelector("#is_active").checked = product.is_active !== false;
 
   mainImageUrl = (product.images || [])[0] || "";
@@ -362,6 +461,16 @@ const fillForm = (product) => {
   renderImageList();
   renderCustomFields();
   renderColorImageFields(parseList(document.querySelector("#colors").value));
+  renderTagList(categoryTags, selectedCategories, (index) => {
+    selectedCategories.splice(index, 1);
+    updateTagHiddenInput(categoryHiddenInput, selectedCategories);
+    renderTagList(categoryTags, selectedCategories, () => {});
+  });
+  renderTagList(homeSectionTags, selectedHomeSections, (index) => {
+    selectedHomeSections.splice(index, 1);
+    updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
+    renderTagList(homeSectionTags, selectedHomeSections, () => {});
+  });
 };
 
 if (mainImageInput) {
@@ -437,6 +546,20 @@ if (resetFormBtn) {
   resetFormBtn.addEventListener("click", clearForm);
 }
 
+if (addCategoryTagBtn && categorySelect) {
+  addCategoryTagBtn.addEventListener("click", () => {
+    addCategoryTag(categorySelect.value);
+    categorySelect.value = "";
+  });
+}
+
+if (addSectionTagBtn && homeSectionsSelect) {
+  addSectionTagBtn.addEventListener("click", () => {
+    addHomeSectionTag(homeSectionsSelect.value);
+    homeSectionsSelect.value = "";
+  });
+}
+
 if (productForm) {
   productForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -450,7 +573,7 @@ if (productForm) {
       title: document.querySelector("#title").value.trim(),
       slug: document.querySelector("#slug").value.trim(),
       subtitle: document.querySelector("#subtitle").value.trim(),
-      category: document.querySelector("#category").value.trim(),
+      category: categoryHiddenInput?.value.trim() || "",
       price: Number(document.querySelector("#price").value || 0),
       old_price: Number(document.querySelector("#old_price").value || 0),
       rating: Number(document.querySelector("#rating").value || 0),
@@ -461,7 +584,7 @@ if (productForm) {
       images: mainImageUrl ? [mainImageUrl] : [],
       gallery: [mainImageUrl, ...galleryUrls.filter((url) => url && url !== mainImageUrl)].filter(Boolean),
       colors: parseList(document.querySelector("#colors").value),
-      home_sections: parseList(document.querySelector("#home_sections").value),
+      home_sections: parseList(homeSectionsHiddenInput?.value || ""),
       specs: readCustomFields(),
       color_images: colorImageMap,
       is_active: document.querySelector("#is_active").checked
@@ -488,4 +611,15 @@ if (productForm) {
 renderImageList();
 renderCustomFields();
 renderColorImageFields(parseList(colorsInput?.value || ""));
+renderTagList(categoryTags, selectedCategories, (index) => {
+  selectedCategories.splice(index, 1);
+  updateTagHiddenInput(categoryHiddenInput, selectedCategories);
+  renderTagList(categoryTags, selectedCategories, () => {});
+});
+renderTagList(homeSectionTags, selectedHomeSections, (index) => {
+  selectedHomeSections.splice(index, 1);
+  updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
+  renderTagList(homeSectionTags, selectedHomeSections, () => {});
+});
+loadCategories();
 loadProducts();

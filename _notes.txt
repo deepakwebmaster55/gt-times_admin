@@ -1,0 +1,4 @@
+# Admin products changes summary
+- Replaced free-text category and home section inputs with dropdown + tag chips.
+- Categories are loaded from Supabase.
+- Selections stored into hidden inputs for saving.

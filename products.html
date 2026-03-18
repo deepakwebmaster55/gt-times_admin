@@ -44,7 +44,14 @@
           </div>
           <div>
             <label for="category">Category</label>
-            <input type="text" id="category" placeholder="luxury, shades, handbags" />
+            <div class="tag-input">
+              <select id="category-select">
+                <option value="">Select category</option>
+              </select>
+              <button class="btn secondary" type="button" id="add-category-tag">Add</button>
+            </div>
+            <div class="tag-list" id="category-tags"></div>
+            <input type="hidden" id="category" />
           </div>
           <div>
             <label for="price">Price</label>
@@ -99,8 +106,20 @@
           </div>
           <div>
             <label for="home_sections">Home Sections</label>
-            <input type="text" id="home_sections" placeholder="featured, new_arrivals, bestseller" />
-            <p class="small">Use: featured, new_arrivals, bestseller, premium_choice, signature_showcase</p>
+            <div class="tag-input">
+              <select id="home-sections-select">
+                <option value="">Select section</option>
+                <option value="featured">Featured</option>
+                <option value="new_arrivals">New Arrivals</option>
+                <option value="bestseller">Bestseller</option>
+                <option value="premium_choice">Premium Choice</option>
+                <option value="signature_showcase">Signature Showcase</option>
+              </select>
+              <button class="btn secondary" type="button" id="add-section-tag">Add</button>
+            </div>
+            <div class="tag-list" id="home-section-tags"></div>
+            <input type="hidden" id="home_sections" />
+            <p class="small">Assign product to homepage sliders.</p>
           </div>          <div>
             <label>Additional Fields</label>
             <div id="custom-fields" class="custom-fields"></div>

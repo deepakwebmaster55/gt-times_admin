@@ -112,6 +112,44 @@ header.admin-header {
   gap: 0.8rem;
 }
 
+.tag-input {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.tag-input select {
+  flex: 1 1 auto;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #eef4ff;
+  border: 1px solid #cfe0ff;
+  color: #0f3d91;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.tag-chip button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  font-weight: 700;
+}
+
 label {
   font-weight: 600;
   display: block;
