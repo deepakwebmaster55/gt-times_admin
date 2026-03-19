@@ -25,10 +25,29 @@ const formatAddress = (address) => {
 
 const statusClass = (status) => {
   const value = String(status || "").toLowerCase();
-  if (value.includes("paid") || value.includes("success")) return "status-badge success";
-  if (value.includes("pending") || value.includes("cod")) return "status-badge pending";
-  if (value.includes("failed") || value.includes("cancel")) return "status-badge danger";
-  return "status-badge";
+  if (value.includes("received") || value.includes("deliver") || value.includes("success")) return "status-badge success";
+  if (value.includes("cancel") || value.includes("fail") || value.includes("refund")) return "status-badge danger";
+  if (value.includes("ship")) return "status-badge info";
+  return "status-badge pending";
+};
+
+const renderTracking = (status) => {
+  const steps = window.GTTracking?.getTrackingSteps(status) || [];
+  return `
+    <div class="tracking-mini">
+      ${steps.map((step) => `
+        <span class="tracking-mini-step${step.done ? " is-done" : ""}${step.active ? " is-active" : ""}">${step.label}</span>
+      `).join("")}
+    </div>
+  `;
+};
+
+const createSelect = (items, current) => {
+  return `
+    <select>
+      ${items.map((item) => `<option value="${item.value}"${item.value === current ? " selected" : ""}>${item.label}</option>`).join("")}
+    </select>
+  `;
 };
 
 const renderOrders = (rows, profilesMap, addressMap, itemsMap, paymentsMap) => {
@@ -37,7 +56,7 @@ const renderOrders = (rows, profilesMap, addressMap, itemsMap, paymentsMap) => {
 
   if (!rows.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="9" class="small">No bookings yet.</td>`;
+    tr.innerHTML = `<td colspan="11" class="small">No bookings yet.</td>`;
     ordersBody.appendChild(tr);
     return;
   }
@@ -50,6 +69,8 @@ const renderOrders = (rows, profilesMap, addressMap, itemsMap, paymentsMap) => {
     const itemsText = items.length
       ? items.map((item) => `${item.title || "Item"} x${item.quantity || 1}`).join("; ")
       : "-";
+    const orderLabel = window.GTTracking?.getOrderLabel(row.status) || row.status || "Pending";
+    const paymentLabel = window.GTTracking?.getPaymentLabel(payment.status) || payment.status || "Payment Pending";
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -60,11 +81,59 @@ const renderOrders = (rows, profilesMap, addressMap, itemsMap, paymentsMap) => {
       <td>${formatAddress(address) || "-"}</td>
       <td>${itemsText}</td>
       <td>Rs. ${Number(row.total_amount || 0).toLocaleString()}</td>
-      <td><span class="${statusClass(row.status)}">${row.status || "pending"}</span></td>
-      <td><span class="${statusClass(payment.status)}">${payment.status || "unpaid"}</span></td>
+      <td><span class="${statusClass(row.status)}">${orderLabel}</span></td>
+      <td><span class="${statusClass(payment.status)}">${paymentLabel}</span></td>
+      <td>${renderTracking(row.status)}</td>
+      <td>
+        <div class="order-admin-actions">
+          ${createSelect(window.GTTracking?.orderStatuses || [], row.status || "order_placed")}
+          ${createSelect(window.GTTracking?.paymentStatuses || [], payment.status || "payment_pending")}
+          <button class="btn secondary" type="button" data-save-order="${row.id}">Save</button>
+          <button class="btn secondary" type="button" data-cancel-order="${row.id}">Cancel Order</button>
+        </div>
+      </td>
     `;
     ordersBody.appendChild(tr);
   });
+
+  ordersBody.querySelectorAll("[data-save-order]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const row = button.closest("tr");
+      const selects = row ? row.querySelectorAll("select") : [];
+      const bookingStatus = selects[0]?.value || "order_placed";
+      const paymentStatus = selects[1]?.value || "payment_pending";
+      const bookingId = button.getAttribute("data-save-order");
+      await updateStatuses(bookingId, bookingStatus, paymentStatus);
+    });
+  });
+
+  ordersBody.querySelectorAll("[data-cancel-order]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const bookingId = button.getAttribute("data-cancel-order");
+      await updateStatuses(bookingId, "cancelled", "payment_pending");
+    });
+  });
+};
+
+const updateStatuses = async (bookingId, bookingStatus, paymentStatus) => {
+  if (!bookingId) return;
+  setOrdersStatus("Updating order...");
+  try {
+    const response = await window.callSupabase3AdminFunction("admin-bookings", {
+      action: "update_status",
+      booking_id: bookingId,
+      booking_status: bookingStatus,
+      payment_status: paymentStatus
+    }, await window.getAdminAccessToken?.());
+    if (response?.error) {
+      setOrdersStatus(response.error, true);
+      return;
+    }
+    window.showToast?.("Order updated.");
+    await loadOrders();
+  } catch (error) {
+    setOrdersStatus(error.message || "Failed to update order.", true);
+  }
 };
 
 const loadOrders = async () => {

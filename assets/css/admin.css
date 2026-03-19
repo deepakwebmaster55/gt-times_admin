@@ -420,3 +420,30 @@ textarea {
   background: #ffe3e3;
   color: #b2362d;
 }
+
+.status-badge.info {
+  background: #e7f0ff;
+  color: #1851b7;
+}
+
+.order-admin-actions {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 180px;
+}
+
+.tracking-mini {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.tracking-mini-step {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.tracking-mini-step.is-done,
+.tracking-mini-step.is-active {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
