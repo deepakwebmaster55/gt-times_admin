@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Glamtreasure Admin</title>
+  <title>Glamtreasure Admin Analysis</title>
   <link rel="stylesheet" href="assets/css/admin.css" />
 </head>
 <body data-admin-guard>
@@ -13,96 +13,283 @@
         <span>Glamtreasure Admin</span>
       </div>
       <div class="actions-row">
-        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+        <a class="btn secondary" href="manage.html">Manage Site</a>
+        <button class="btn secondary" data-admin-refresh type="button">Refresh</button>
         <button class="btn secondary" data-admin-logout>Logout</button>
       </div>
     </div>
   </header>
 
-  <main class="container" style="padding:2rem 0;">
-    <div class="card" style="margin-bottom:1.2rem;">
-      <h2>What do you want to edit?</h2>
-      <p class="small">Choose a section below to manage products, homepage sliders, categories, blogs, or reviews.</p>
-      <div class="nav-links" style="margin-top:0.8rem;">
-        <a href="products.html">Products</a>
-        <a href="mainpage.html">Main Page</a>
-        <a href="categories.html">Categories</a>
-        <a href="blog.html">Blog</a>
-        <a href="reviews.html">Reviews</a>
-        <a href="offers.html">Offers</a>
-        <a href="orders.html">Bookings</a>
+  <main class="container dashboard-shell">
+    <section class="dashboard-hero">
+      <div class="dashboard-hero-copy">
+        <p class="dashboard-kicker">Analysis Console</p>
+        <h1>Live sales intelligence, payment risk, and delivery movement in one place.</h1>
+        <p class="small">This page is only for analytics. Use <strong>Manage Site</strong> to open products, homepage, categories, offers, reviews, bookings, stocks, and storage totals.</p>
       </div>
-    </div>
+      <div class="dashboard-hero-actions dashboard-side-card">
+        <h3>Quick route</h3>
+        <p class="small">Need to edit the site instead of reading data?</p>
+        <a class="btn" href="manage.html">Open Manage Site</a>
+        <p class="small dashboard-status" data-dashboard-status>Loading dashboard...</p>
+      </div>
+    </section>
 
-    <div class="card" style="margin-bottom:1.2rem;">
-      <h2>Database Overview</h2>
-      <p class="small">Total records across each Supabase project.</p>
-      <div class="admin-grid" style="grid-template-columns: 1fr 1fr;">
-        <div class="card" style="box-shadow:none;">
-          <h3>Supabase 1</h3>
-          <p class="small">Products, home sliders, categories, blog</p>
-          <div class="badge">Total records: <span data-db1-count>0</span></div>
-        </div>
-        <div class="card" style="box-shadow:none;">
-          <h3>Supabase 2</h3>
-          <p class="small">Reviews, offers</p>
-          <div class="badge">Total records: <span data-db2-count>0</span></div>
-        </div>
-      </div>
-    </div>
+    <section class="dashboard-kpis">
+      <article class="dashboard-kpi-card">
+        <p class="kpi-label">Products sold</p>
+        <h2 data-kpi-products-sold>0</h2>
+        <p class="kpi-meta" data-kpi-products-sold-meta>Units sold in selected period</p>
+      </article>
+      <article class="dashboard-kpi-card">
+        <p class="kpi-label">Gross revenue</p>
+        <h2 data-kpi-revenue>Rs. 0</h2>
+        <p class="kpi-meta" data-kpi-revenue-meta>Collected from paid orders</p>
+      </article>
+      <article class="dashboard-kpi-card">
+        <p class="kpi-label">Contact submissions</p>
+        <h2 data-kpi-contacts>0</h2>
+        <p class="kpi-meta" data-kpi-contacts-meta>Contact form records in selected period</p>
+      </article>
+      <article class="dashboard-kpi-card">
+        <p class="kpi-label">Cancelled orders</p>
+        <h2 data-kpi-cancelled>0</h2>
+        <p class="kpi-meta" data-kpi-cancelled-meta>Cancelled in selected period</p>
+      </article>
+      <article class="dashboard-kpi-card">
+        <p class="kpi-label">Shipped / Out for delivery</p>
+        <h2 data-kpi-shipped>0</h2>
+        <p class="kpi-meta" data-kpi-shipped-meta>Fulfilment movement in selected period</p>
+      </article>
+      <article class="dashboard-kpi-card">
+        <p class="kpi-label">Received orders</p>
+        <h2 data-kpi-received>0</h2>
+        <p class="kpi-meta" data-kpi-received-meta>Delivered in chosen received window</p>
+      </article>
+    </section>
 
-    <div class="admin-grid">
-      <div class="card">
-        <h3>Products</h3>
-        <p class="small">Add, edit, delete products and assign them to homepage sliders.</p>
-        <a class="btn" href="products.html">Manage Products</a>
-      </div>
-      <div class="card">
-        <h3>Main Page</h3>
-        <p class="small">Edit hero slider, featured sliders, and signature showcase.</p>
-        <a class="btn" href="mainpage.html">Manage Homepage</a>
-      </div>
-      <div class="card">
-        <h3>Categories</h3>
-        <p class="small">Add or delete categories and assign products.</p>
-        <a class="btn" href="categories.html">Manage Categories</a>
-      </div>
-      <div class="card">
-        <h3>Blog</h3>
-        <p class="small">Publish or remove blog entries.</p>
-        <a class="btn" href="blog.html">Manage Blog</a>
-      </div>
-      <div class="card">
-        <h3>Reviews</h3>
-        <p class="small">Add reviews (customers cannot add directly).</p>
-        <a class="btn" href="reviews.html">Manage Reviews</a>
-      </div>
-      <div class="card">
-        <h3>Bookings</h3>
-        <p class="small">See bookings, customer details, and delivery address.</p>
-        <a class="btn" href="orders.html">View Bookings</a>
-      </div>
-      <div class="card">
-        <h3>SEO Sitemap</h3>
-        <p class="small">Generate a sitemap including all product URLs. Upload it to your site root.</p>
-        <button class="btn" type="button" data-generate-sitemap>Download Sitemap</button>
-      </div>
-    </div>
+    <section class="dashboard-grid">
+      <article class="card chart-card chart-card-wide">
+        <div class="chart-card-head">
+          <div>
+            <h3>Products sold trend</h3>
+            <p class="small">Number of sold products across the shared analysis window.</p>
+          </div>
+          <div class="chart-tools">
+            <select data-dashboard-range>
+              <option value="10">Last 10 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="120">Last 4 months</option>
+              <option value="210">Last 7 months</option>
+              <option value="270">Last 9 months</option>
+              <option value="365">Last 1 year</option>
+            </select>
+            <div class="chart-value" data-chart-products-value>0 units</div>
+          </div>
+        </div>
+        <div class="chart-shell" data-chart-products></div>
+      </article>
+
+      <article class="card chart-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Sales revenue trend</h3>
+            <p class="small">Paid sales revenue over the selected analysis window, with today's sale amount highlighted.</p>
+          </div>
+          <div class="chart-tools">
+            <select data-dashboard-range>
+              <option value="10">Last 10 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="120">Last 4 months</option>
+              <option value="210">Last 7 months</option>
+              <option value="270">Last 9 months</option>
+              <option value="365">Last 1 year</option>
+            </select>
+            <div class="chart-value" data-chart-profit-value>Rs. 0</div>
+          </div>
+        </div>
+        <div class="metric-note metric-note-sales">
+          <strong data-profit-note>Today's sale: Rs. 0</strong>
+          <span>Revenue is calculated only from orders with `payment_received`.</span>
+        </div>
+        <div class="chart-shell" data-chart-profit></div>
+      </article>
+
+      <article class="card chart-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Contact form submissions</h3>
+            <p class="small">Tracks submissions if a contact table exists in Supabase.</p>
+          </div>
+          <div class="chart-tools">
+            <select data-dashboard-range>
+              <option value="10">Last 10 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="120">Last 4 months</option>
+              <option value="210">Last 7 months</option>
+              <option value="270">Last 9 months</option>
+              <option value="365">Last 1 year</option>
+            </select>
+            <div class="chart-value" data-chart-contacts-value>0</div>
+          </div>
+        </div>
+        <div class="chart-shell" data-chart-contacts></div>
+      </article>
+
+      <article class="card chart-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Cancelled orders</h3>
+            <p class="small">Cancelled order volume for the selected analysis window.</p>
+          </div>
+          <div class="chart-tools">
+            <select data-dashboard-range>
+              <option value="10">Last 10 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="120">Last 4 months</option>
+              <option value="210">Last 7 months</option>
+              <option value="270">Last 9 months</option>
+              <option value="365">Last 1 year</option>
+            </select>
+            <div class="chart-value" data-chart-cancelled-value>0</div>
+          </div>
+        </div>
+        <div class="chart-shell" data-chart-cancelled></div>
+      </article>
+
+      <article class="card chart-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Shipped and out for delivery</h3>
+            <p class="small">Combined shipping movement in the selected analysis window.</p>
+          </div>
+          <div class="chart-tools">
+            <select data-dashboard-range>
+              <option value="10">Last 10 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="120">Last 4 months</option>
+              <option value="210">Last 7 months</option>
+              <option value="270">Last 9 months</option>
+              <option value="365">Last 1 year</option>
+            </select>
+            <div class="chart-value" data-chart-shipped-value>0</div>
+          </div>
+        </div>
+        <div class="chart-shell" data-chart-shipped></div>
+      </article>
+
+      <article class="card chart-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Pending payment orders</h3>
+            <p class="small">Changes with its own payment-delay window.</p>
+          </div>
+          <div class="chart-tools">
+            <select data-pending-range>
+              <option value="30" selected>Last 30 days</option>
+              <option value="20">Last 20 days</option>
+              <option value="15">Last 15 days</option>
+              <option value="7">Last 7 days</option>
+              <option value="5">Last 5 days</option>
+              <option value="3">Last 3 days</option>
+              <option value="1">Last 1 day</option>
+            </select>
+            <div class="chart-value" data-chart-pending-value>0</div>
+          </div>
+        </div>
+        <div class="chart-shell" data-chart-pending></div>
+      </article>
+
+      <article class="card chart-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Orders delivered</h3>
+            <p class="small">Received-order trend with its own time selector.</p>
+          </div>
+          <div class="chart-tools">
+            <select data-received-range>
+              <option value="10">Last 10 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="120">Last 4 months</option>
+              <option value="210">Last 7 months</option>
+              <option value="270">Last 9 months</option>
+              <option value="365">Last 1 year</option>
+            </select>
+            <div class="chart-value" data-chart-received-value>0</div>
+          </div>
+        </div>
+        <div class="chart-shell" data-chart-received></div>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="card alert-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Payment alerts</h3>
+            <p class="small">Orders pending for more than 30 days appear here automatically.</p>
+          </div>
+          <div class="chart-value danger" data-overdue-count>0 alerts</div>
+        </div>
+        <div class="alert-list" data-overdue-alerts></div>
+      </article>
+
+      <article class="card summary-card">
+        <div class="chart-card-head">
+          <div>
+            <h3>Operational values</h3>
+            <p class="small">Fast counters for the most important order states.</p>
+          </div>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <span>Pending payments</span>
+            <strong data-summary-pending>0</strong>
+          </div>
+          <div class="summary-tile">
+            <span>Shipped orders</span>
+            <strong data-summary-shipped>0</strong>
+          </div>
+          <div class="summary-tile">
+            <span>Out for delivery</span>
+            <strong data-summary-out>0</strong>
+          </div>
+          <div class="summary-tile">
+            <span>Delivered orders</span>
+            <strong data-summary-delivered>0</strong>
+          </div>
+          <div class="summary-tile">
+            <span>Payment received</span>
+            <strong data-summary-paid>0</strong>
+          </div>
+          <div class="summary-tile">
+            <span>Cancelled orders</span>
+            <strong data-summary-cancelled>0</strong>
+          </div>
+        </div>
+      </article>
+    </section>
   </main>
 
-    <script defer src="https://pushrelay.com/pixel/PCV4Lj58BPsG6VDC"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://pushrelay.com/pixel/PCV4Lj58BPsG6VDC"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/supabase.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/admin.js"></script>
-  <script src="js/sitemap.js"></script>
+  <script src="js/tracking.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-

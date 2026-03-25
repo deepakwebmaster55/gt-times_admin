@@ -32,14 +32,17 @@ const uploadToStorage = async (file, slug) => {
   if (!window.gtSupabase1) return "";
   const fileName = sanitizeFileName(file.name);
   const path = `blogs/${slug}/${Date.now()}_${fileName}`;
+
   const { error } = await window.gtSupabase1.storage.from(STORAGE_BUCKET).upload(path, file, {
     cacheControl: "3600",
-    upsert: true
+    upsert: true,
+    contentType: file.type || "image/jpeg"
   });
   if (error) {
-    setBlogStatus(error.message);
+    setBlogStatus(error.message || "Image upload failed.");
     return "";
   }
+
   const { data } = window.gtSupabase1.storage.from(STORAGE_BUCKET).getPublicUrl(path);
   return data?.publicUrl || "";
 };
@@ -56,73 +59,73 @@ const clearBlogForm = () => {
 const loadBlogs = async () => {
   window.setAdminLoading?.(true);
   window.renderSkeletonRows?.(blogTableBody, 3, 4);
-  if (!window.gtSupabase1) {
-    setBlogStatus("Supabase 1 keys missing in admin/js/config.js");
-    return;
-  }
-  const { data, error } = await window.gtSupabase1
-    .from("blogs")
-    .select("*")
-    .order("published_at", { ascending: false });
-
-  if (error) {
-    setBlogStatus(error.message);
-    return;
-  }
-
-  blogTableBody.innerHTML = "";
-  (data || []).forEach((blog) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${blog.title || ""}</td>
-      <td><span class="badge">${blog.is_active ? "Active" : "Inactive"}</span></td>
-      <td>
-        <div class="actions-row">
-          <button class="btn secondary" data-edit="${blog.id}">Edit</button>
-          <button class="btn link" data-delete="${blog.id}">Delete</button>
-        </div>
-      </td>
-    `;
-    blogTableBody.appendChild(row);
-  });
-
-  blogTableBody.querySelectorAll("[data-edit]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-edit");
-      const { data, error } = await window.gtSupabase1
-        .from("blogs")
-        .select("*")
-        .eq("id", id)
-        .single();
-      if (error) {
-        setBlogStatus(error.message);
-        return;
-      }
-      document.querySelector("#blog-id").value = data.id || "";
-      document.querySelector("#blog-title").value = data.title || "";
-      document.querySelector("#blog-slug").value = data.slug || "";
-      document.querySelector("#blog-url").value = data.url || "";
-      document.querySelector("#blog-summary").value = data.summary || "";
-      blogImageUrl = data.image_url || "";
-      document.querySelector("#blog-date").value = data.published_at ? data.published_at.split("T")[0] : "";
-      document.querySelector("#blog-active").checked = data.is_active !== false;
-      renderImagePreview();
+  try {
+    if (!window.callSupabase2AdminFunction) {
+      setBlogStatus("Supabase 2 admin function is unavailable.");
+      return;
+    }
+    let result;
+    result = await window.callSupabase2AdminFunction("admin-blogs", { action: "list" });
+    blogTableBody.innerHTML = "";
+    (result.blogs || []).forEach((blog) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${blog.title || ""}</td>
+        <td><span class="badge">${blog.is_active ? "Active" : "Inactive"}</span></td>
+        <td>
+          <div class="actions-row">
+            <button class="btn secondary" data-edit="${blog.id}">Edit</button>
+            <button class="btn link" data-delete="${blog.id}">Delete</button>
+          </div>
+        </td>
+      `;
+      blogTableBody.appendChild(row);
     });
-  });
 
-  blogTableBody.querySelectorAll("[data-delete]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-delete");
-      if (!confirm("Delete this blog?")) return;
-      const { error } = await window.gtSupabase1.from("blogs").delete().eq("id", id);
-      if (error) {
-        setBlogStatus(error.message);
-        return;
-      }
-      loadBlogs();
-      window.setAdminLoading?.(false);
+    blogTableBody.querySelectorAll("[data-edit]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-edit");
+        let result;
+        try {
+          result = await window.callSupabase2AdminFunction("admin-blogs", { action: "get", id });
+        } catch (error) {
+          setBlogStatus(error.message || "Unable to load blog.");
+          return;
+        }
+        const data = result.blog || null;
+        if (!data) {
+          setBlogStatus("Blog not found.");
+          return;
+        }
+        document.querySelector("#blog-id").value = data.id || "";
+        document.querySelector("#blog-title").value = data.title || "";
+        document.querySelector("#blog-slug").value = data.slug || "";
+        document.querySelector("#blog-summary").value = data.summary || "";
+        blogImageUrl = data.image_url || "";
+        document.querySelector("#blog-date").value = data.published_at ? data.published_at.split("T")[0] : "";
+        document.querySelector("#blog-active").checked = data.is_active !== false;
+        renderImagePreview();
+      });
     });
-  });
+
+    blogTableBody.querySelectorAll("[data-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-delete");
+        if (!confirm("Delete this blog?")) return;
+        try {
+          await window.callSupabase2AdminFunction("admin-blogs", { action: "delete", id });
+        } catch (error) {
+          setBlogStatus(error.message || "Unable to delete blog.");
+          return;
+        }
+        loadBlogs();
+      });
+    });
+  } catch (error) {
+    setBlogStatus(error.message || "Unable to load blogs.");
+  } finally {
+    window.setAdminLoading?.(false);
+  }
 };
 
 if (blogImageInput) {
@@ -135,6 +138,8 @@ if (blogImageInput) {
       blogImageUrl = url;
       setImageStatus("Image uploaded.");
       window.showToast?.("Image uploaded.");
+    } else {
+      setImageStatus("Image upload failed.");
     }
     renderImagePreview();
   });
@@ -143,8 +148,8 @@ if (blogImageInput) {
 if (blogForm) {
   blogForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!window.gtSupabase1) {
-      setBlogStatus("Supabase 1 keys missing in admin/js/config.js");
+    if (!window.callSupabase2AdminFunction) {
+      setBlogStatus("Supabase 2 admin function is unavailable.");
       return;
     }
 
@@ -152,7 +157,6 @@ if (blogForm) {
       id: document.querySelector("#blog-id").value || undefined,
       title: document.querySelector("#blog-title").value.trim(),
       slug: document.querySelector("#blog-slug").value.trim(),
-      url: document.querySelector("#blog-url").value.trim(),
       summary: document.querySelector("#blog-summary").value.trim(),
       image_url: blogImageUrl,
       published_at: document.querySelector("#blog-date").value || null,
@@ -168,9 +172,10 @@ if (blogForm) {
       return;
     }
 
-    const { error } = await window.gtSupabase1.from("blogs").upsert(payload, { onConflict: "slug" });
-    if (error) {
-      setBlogStatus(error.message);
+    try {
+      await window.callSupabase2AdminFunction("admin-blogs", { action: "upsert", blog: payload });
+    } catch (error) {
+      setBlogStatus(error.message || "Unable to save blog.");
       return;
     }
     setBlogStatus("Blog saved.");
@@ -186,4 +191,3 @@ if (blogReset) {
 }
 
 loadBlogs();
-window.setAdminLoading?.(false);

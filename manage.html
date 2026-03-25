@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manage Site | Glamtreasure Admin</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body data-admin-guard>
+  <header class="admin-header">
+    <div class="container">
+      <div class="brand"><span>Glamtreasure Admin</span></div>
+      <div class="actions-row">
+        <a class="btn secondary" href="index.html">Analysis</a>
+        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+        <button class="btn secondary" data-admin-logout>Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container dashboard-shell">
+    <section class="dashboard-hero">
+      <div class="dashboard-hero-copy">
+        <p class="dashboard-kicker">Manage Site</p>
+        <h1>Open every admin tool from one clean control page.</h1>
+        <p class="small">This page replaces the old button list and also shows the total storage used by each Supabase project.</p>
+      </div>
+      <div class="dashboard-hero-actions dashboard-side-card">
+        <h3>Storage overview</h3>
+        <div class="storage-list">
+          <div class="storage-item">
+            <strong>Supabase 1</strong>
+            <span><span data-db1-size>Loading...</span> | <span data-db1-count>0</span> records</span>
+          </div>
+          <div class="storage-item">
+            <strong>Supabase 2</strong>
+            <span><span data-db2-size>Loading...</span> | <span data-db2-count>0</span> records</span>
+          </div>
+          <div class="storage-item">
+            <strong>Supabase 3</strong>
+            <span><span data-db3-size>Loading...</span> | <span data-db3-count>0</span> records</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="manage-grid">
+      <a class="manage-card" href="products.html">
+        <strong>Products</strong>
+        <span>Add, update, activate, and organize product content.</span>
+      </a>
+      <a class="manage-card" href="mainpage.html">
+        <strong>Main Page</strong>
+        <span>Control hero sliders, showcase blocks, and homepage sections.</span>
+      </a>
+      <a class="manage-card" href="categories.html">
+        <strong>Categories</strong>
+        <span>Create categories and assign products with a cleaner flow.</span>
+      </a>
+      <a class="manage-card" href="blog.html">
+        <strong>Blog</strong>
+        <span>Publish, edit, and remove blog posts from the admin panel.</span>
+      </a>
+      <a class="manage-card" href="reviews.html">
+        <strong>Reviews</strong>
+        <span>Manage manual customer reviews and visibility.</span>
+      </a>
+      <a class="manage-card" href="offers.html">
+        <strong>Offers</strong>
+        <span>Create discounts and BOGO campaigns with product rules.</span>
+      </a>
+      <a class="manage-card" href="orders.html">
+        <strong>Bookings</strong>
+        <span>Track COD orders, payment states, and push notifications.</span>
+      </a>
+      <a class="manage-card" href="stocks.html">
+        <strong>Stocks</strong>
+        <span>Update live stock counts and active status quickly.</span>
+      </a>
+    </section>
+  </main>
+
+  <script defer src="https://pushrelay.com/pixel/PCV4Lj58BPsG6VDC"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

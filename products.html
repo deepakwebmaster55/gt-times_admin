@@ -12,7 +12,8 @@
       <div class="brand"><span>Glamtreasure Admin</span></div>
       <div class="actions-row">
         <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
-        <a class="btn secondary" href="index.html">Dashboard</a>
+        <a class="btn secondary" href="manage.html">Manage Site</a>
+        <a class="btn secondary" href="index.html">Analysis</a>
         <button class="btn secondary" data-admin-logout>Logout</button>
       </div>
     </div>
@@ -82,14 +83,21 @@
             <input type="text" id="stock" placeholder="In stock" />
           </div>
           <div>
+            <label for="stock_quantity">Total Stock Quantity</label>
+            <input type="number" id="stock_quantity" min="0" step="1" placeholder="0" />
+          </div>
+          <div>
             <label for="main-image">Main Product Image</label>
             <input type="file" id="main-image" accept="image/png,image/jpeg,image/webp" />
             <div class="small" id="main-image-status"></div>
+            <div class="admin-upload-preview" id="main-image-preview"></div>
           </div>
           <div>
-            <label for="gallery-images">Gallery Images (up to 5)</label>
+            <label for="gallery-images">Gallery Images (up to 4, total 5 including main)</label>
             <input type="file" id="gallery-images" accept="image/png,image/jpeg,image/webp" multiple />
+            <div class="small">Add up to 4 gallery images here. The main image is counted separately.</div>
             <div class="small" id="gallery-status"></div>
+            <div class="admin-upload-preview admin-upload-preview-grid" id="gallery-image-preview"></div>
           </div>
           <div>
             <label>Uploaded Images</label>
@@ -109,17 +117,18 @@
             <div class="tag-input">
               <select id="home-sections-select">
                 <option value="">Select section</option>
+                <option value="showcase_one">Showcase 1</option>
+                <option value="showcase_two">Showcase 2</option>
                 <option value="featured">Featured</option>
                 <option value="new_arrivals">New Arrivals</option>
                 <option value="bestseller">Bestseller</option>
                 <option value="premium_choice">Premium Choice</option>
-                <option value="signature_showcase">Signature Showcase</option>
               </select>
               <button class="btn secondary" type="button" id="add-section-tag">Add</button>
             </div>
             <div class="tag-list" id="home-section-tags"></div>
             <input type="hidden" id="home_sections" />
-            <p class="small">Assign product to homepage sliders.</p>
+            <p class="small">Assign product to homepage carousels and either Showcase 1 or Showcase 2.</p>
           </div>          <div>
             <label>Additional Fields</label>
             <div id="custom-fields" class="custom-fields"></div>
@@ -135,6 +144,7 @@
             <button class="btn" type="submit">Save Product</button>
             <button class="btn secondary" type="button" id="reset-form">Clear</button>
           </div>
+          <p class="small" id="product-size-estimate">Estimated product size: 0 KB</p>
           <p class="small" id="product-status"></p>
         </form>
       </div>
@@ -147,6 +157,7 @@
               <tr>
                 <th>Title</th>
                 <th>Category</th>
+                <th>Stock Left</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -157,6 +168,45 @@
       </div>
     </div>
   </main>
+
+  <div class="cropper-modal hidden" id="image-cropper-modal" aria-hidden="true">
+    <div class="cropper-dialog" role="dialog" aria-modal="true" aria-labelledby="cropper-title">
+      <div class="cropper-header">
+        <div>
+          <h3 id="cropper-title">Crop Product Image</h3>
+          <p class="small">Move and zoom the image to keep the main focus inside one consistent frame.</p>
+        </div>
+        <button class="btn secondary" type="button" id="cropper-cancel-top">Close</button>
+      </div>
+      <div class="cropper-body">
+        <div class="cropper-stage-wrap">
+          <div class="cropper-stage" id="cropper-stage">
+            <img id="cropper-image" alt="Crop preview" />
+            <div class="cropper-grid" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="cropper-sidebar">
+          <div class="cropper-control">
+            <label for="cropper-zoom">Zoom</label>
+            <input type="range" id="cropper-zoom" min="1" max="3" step="0.01" value="1" />
+          </div>
+          <div class="cropper-control">
+            <label>Target Ratio</label>
+            <div class="cropper-ratio-group">
+              <button class="cropper-ratio-pill is-active" type="button" data-crop-ratio="showcase">Showcase / Hero</button>
+              <button class="cropper-ratio-pill" type="button" data-crop-ratio="card">Product Card</button>
+            </div>
+          </div>
+          <p class="small">The export keeps the crop at the original pixel density, then stores it in high-quality WebP.</p>
+        </div>
+      </div>
+      <div class="cropper-actions">
+        <button class="btn secondary" type="button" id="cropper-reset">Reset Crop</button>
+        <button class="btn secondary" type="button" id="cropper-cancel">Cancel</button>
+        <button class="btn" type="button" id="cropper-apply">Use This Crop</button>
+      </div>
+    </div>
+  </div>
 
     <script defer src="https://pushrelay.com/pixel/PCV4Lj58BPsG6VDC"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

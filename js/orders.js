@@ -142,6 +142,7 @@ const loadOrders = async () => {
     return;
   }
 
+  window.setAdminLoading?.(true);
   setOrdersStatus("Loading bookings...");
 
   const token = await window.getAdminAccessToken?.();
@@ -198,6 +199,8 @@ const loadOrders = async () => {
     setOrdersStatus("");
   } catch (error) {
     setOrdersStatus(error.message || "Failed to load bookings.", true);
+  } finally {
+    window.setAdminLoading?.(false);
   }
 };
 

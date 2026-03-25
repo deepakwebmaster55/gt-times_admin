@@ -12,7 +12,8 @@
       <div class="brand"><span>Glamtreasure Admin</span></div>
       <div class="actions-row">
         <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
-<a class="btn secondary" href="index.html">Dashboard</a>
+        <a class="btn secondary" href="manage.html">Manage Site</a>
+        <a class="btn secondary" href="index.html">Analysis</a>
         <button class="btn secondary" data-admin-logout>Logout</button>
       </div>
     </div>
@@ -21,15 +22,20 @@
   <main class="container" style="padding:2rem 0;">
     <div class="card" style="margin-bottom:1.2rem;">
       <h2>Main Page</h2>
-      <p class="small">Update hero slider, carousels, and the signature watch showcase. Use 1400 x 900 images to avoid text overlap.</p>
-      <p class="notice">Hero slider uses the Home Slider form below. Product sliders are controlled by each product's Home Sections.</p>
+      <p class="small">Update the fullscreen homepage hero, carousels, and the signature watch showcase. For best results use one desktop image, one mobile image, and one transparent SVG overlay per slide.</p>
+      <p class="notice">Hero slider supports up to 5 slides. Each slide can have heading, subheading, desktop image, mobile image, SVG overlay, exact SVG position for desktop and phone, and two buttons.</p>
     </div>
 
     <div class="admin-grid" style="grid-template-columns: 1.1fr 1fr;">
       <div class="card">
-        <h3>Hero Slider (Home Slider)</h3>
+        <h3>Hero Slider (Fullscreen Home Slider)</h3>
+        <p class="notice">Required layout: desktop hero in landscape 1920 x 1080, mobile hero in portrait 1080 x 1350, and overlay as transparent SVG. The crop tool will lock these layouts before upload.</p>
         <form class="form-grid" id="hero-form">
           <input type="hidden" id="hero-id" />
+          <input type="hidden" id="hero-svg-desktop-x" value="74" />
+          <input type="hidden" id="hero-svg-desktop-y" value="50" />
+          <input type="hidden" id="hero-svg-mobile-x" value="50" />
+          <input type="hidden" id="hero-svg-mobile-y" value="26" />
           <div>
             <label for="hero-eyebrow">Eyebrow</label>
             <input type="text" id="hero-eyebrow" />
@@ -40,13 +46,27 @@
           </div>
           <div>
             <label for="hero-subtitle">Subtitle</label>
-            <input type="text" id="hero-subtitle" />
+            <textarea id="hero-subtitle"></textarea>
           </div>
           <div>
-            <label for="hero-image">Image</label>
-            <input type="file" id="hero-image" accept="image/*" required />
+            <label for="hero-image">Desktop Image</label>
+            <p class="small">Use a wide landscape image. Recommended size: 1920 x 1080.</p>
+            <input type="file" id="hero-image" accept="image/png,image/jpeg,image/webp" />
             <div class="small" id="hero-image-status"></div>
             <div class="small" id="hero-image-preview"></div>
+          </div>
+          <div>
+            <label for="hero-mobile-image">Mobile Image</label>
+            <p class="small">Use a tall portrait image. Recommended size: 1080 x 1350.</p>
+            <input type="file" id="hero-mobile-image" accept="image/png,image/jpeg,image/webp" />
+            <div class="small" id="hero-mobile-image-status"></div>
+            <div class="small" id="hero-mobile-image-preview"></div>
+          </div>
+          <div>
+            <label for="hero-svg">SVG Overlay</label>
+            <input type="file" id="hero-svg" accept=".svg,image/svg+xml" />
+            <div class="small" id="hero-svg-status"></div>
+            <div class="small" id="hero-svg-preview"></div>
           </div>
           <div>
             <label for="hero-primary-label">Primary Button Label</label>
@@ -73,9 +93,48 @@
               <input type="checkbox" id="hero-active" checked /> Active
             </label>
           </div>
+
+          <div class="hero-preview-editor">
+            <div class="hero-preview-header">
+              <div>
+                <strong>SVG Position Preview</strong>
+                <p class="small">Drag the SVG inside each frame. The saved position will be used on the main site.</p>
+              </div>
+              <button class="btn secondary" type="button" id="hero-position-reset">Reset Positions</button>
+            </div>
+            <div class="hero-preview-grid">
+              <section>
+                <div class="hero-preview-label-row">
+                  <strong>Desktop Preview</strong>
+                  <span class="small" id="hero-desktop-position-readout">X 74% | Y 50%</span>
+                </div>
+                <div class="hero-preview-canvas hero-preview-canvas-desktop" id="hero-desktop-canvas" data-device="desktop">
+                  <div class="hero-preview-bg" id="hero-desktop-bg"></div>
+                  <div class="hero-preview-shade"></div>
+                  <div class="hero-preview-svg" id="hero-desktop-svg-handle" data-device="desktop">
+                    <img id="hero-desktop-svg-image" alt="" aria-hidden="true" />
+                  </div>
+                </div>
+              </section>
+              <section>
+                <div class="hero-preview-label-row">
+                  <strong>Mobile Preview</strong>
+                  <span class="small" id="hero-mobile-position-readout">X 50% | Y 26%</span>
+                </div>
+                <div class="hero-preview-canvas hero-preview-canvas-mobile" id="hero-mobile-canvas" data-device="mobile">
+                  <div class="hero-preview-bg" id="hero-mobile-bg"></div>
+                  <div class="hero-preview-shade"></div>
+                  <div class="hero-preview-svg" id="hero-mobile-svg-handle" data-device="mobile">
+                    <img id="hero-mobile-svg-image" alt="" aria-hidden="true" />
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+
           <div class="actions-row">
-        <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
-<button class="btn" type="submit">Save Slide</button>
+            <a class="btn secondary" href="../index.html" target="_blank" rel="noopener">Preview Site</a>
+            <button class="btn" type="submit">Save Slide</button>
             <button class="btn secondary" type="button" id="hero-reset">Clear</button>
           </div>
           <p class="small" id="hero-status"></p>
@@ -84,6 +143,7 @@
 
       <div class="card">
         <h3>Hero Slider List</h3>
+        <p class="small">Saved slides: <span id="hero-count">0</span> / 5</p>
         <div style="overflow:auto;">
           <table class="table" id="hero-table">
             <thead>
@@ -101,18 +161,19 @@
     </div>
 
     <div class="card" style="margin-top:1.2rem;">
-      <h3>Product Sliders & Signature Showcase</h3>
-      <p class="small">Toggle sections for each product. Use signature_showcase to show in the Royal Crown style slider.</p>
+      <h3>Product Sliders & Showcases</h3>
+      <p class="small">Toggle sections for each product. Showcase 1 and Showcase 2 are independent homepage panels.</p>
       <div style="overflow:auto;">
         <table class="table" id="section-table">
           <thead>
             <tr>
               <th>Product</th>
+              <th>Showcase 1</th>
+              <th>Showcase 2</th>
               <th>Featured</th>
               <th>New Arrivals</th>
               <th>Bestseller</th>
               <th>Premium Choice</th>
-              <th>Signature Showcase</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -122,18 +183,51 @@
     </div>
   </main>
 
-    <script defer src="https://pushrelay.com/pixel/PCV4Lj58BPsG6VDC"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <div class="cropper-modal hidden" id="hero-image-cropper-modal" aria-hidden="true">
+    <div class="cropper-dialog" role="dialog" aria-modal="true" aria-labelledby="hero-cropper-title">
+      <div class="cropper-header">
+        <div>
+          <h3 id="hero-cropper-title">Crop Hero Image</h3>
+          <p class="small">Drag to reposition and zoom to fit the required slider layout before upload.</p>
+        </div>
+        <button class="btn secondary" type="button" id="hero-cropper-cancel-top">Close</button>
+      </div>
+      <div class="cropper-body">
+        <div class="cropper-stage-wrap">
+          <div class="cropper-stage" id="hero-cropper-stage">
+            <img id="hero-cropper-image" alt="Hero crop preview" />
+            <div class="cropper-grid" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="cropper-sidebar">
+          <div class="cropper-control">
+            <label for="hero-cropper-zoom">Zoom</label>
+            <input type="range" id="hero-cropper-zoom" min="1" max="3" step="0.01" value="1" />
+          </div>
+          <div class="cropper-control">
+            <label>Target Layout</label>
+            <div class="cropper-ratio-group">
+              <button class="cropper-ratio-pill is-active" type="button" data-hero-crop-ratio="hero_desktop">Desktop 1920 x 1080</button>
+              <button class="cropper-ratio-pill" type="button" data-hero-crop-ratio="hero_mobile">Mobile 1080 x 1350</button>
+            </div>
+          </div>
+          <p class="small">Desktop uses a wide landscape crop. Mobile uses a portrait crop for the homepage slider.</p>
+        </div>
+      </div>
+      <div class="cropper-actions">
+        <button class="btn secondary" type="button" id="hero-cropper-reset">Reset Crop</button>
+        <button class="btn secondary" type="button" id="hero-cropper-cancel">Cancel</button>
+        <button class="btn" type="button" id="hero-cropper-apply">Use This Crop</button>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="https://pushrelay.com/pixel/PCV4Lj58BPsG6VDC"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/supabase.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/admin.js"></script>  <script src="js/mainpage.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/mainpage.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-

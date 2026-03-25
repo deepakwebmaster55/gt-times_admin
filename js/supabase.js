@@ -55,6 +55,35 @@ const callSupabase2AdminFunction = async (path, payload) => {
   }
 };
 
+const callSupabase1AdminFunction = async (path, payload) => {
+  const baseUrl = supabase1Config.functionsUrl || (supabase1Config.url ? `${supabase1Config.url}/functions/v1` : "");
+  if (!baseUrl) throw new Error("Supabase 1 functions URL missing in admin/js/config.js");
+
+  const token = await getAdminAccessToken();
+  if (!token) throw new Error("Admin session expired. Please login again.");
+
+  const response = await fetch(`${baseUrl}/${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload || {})
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || response.statusText);
+  }
+
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    return { raw: text };
+  }
+};
+
 const callSupabase3AdminFunction = async (path, payload, tokenOverride) => {
   const baseUrl = supabase3Config.functionsUrl || (supabase3Config.url ? `${supabase3Config.url}/functions/v1` : "");
   if (!baseUrl) throw new Error("Supabase 3 functions URL missing in admin/js/config.js");
@@ -87,5 +116,6 @@ window.gtSupabase1 = supabase1;
 window.gtSupabase2 = supabase2;
 window.gtSupabase3 = supabase3;
 window.getAdminAccessToken = getAdminAccessToken;
+window.callSupabase1AdminFunction = callSupabase1AdminFunction;
 window.callSupabase2AdminFunction = callSupabase2AdminFunction;
 window.callSupabase3AdminFunction = callSupabase3AdminFunction;

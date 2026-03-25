@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bookings | Glamtreasure Admin</title>
+  <title>Admin Stocks | Glamtreasure</title>
   <link rel="stylesheet" href="assets/css/admin.css" />
 </head>
 <body data-admin-guard>
   <header class="admin-header">
     <div class="container">
-      <div class="brand">
-        <span>Glamtreasure Admin</span>
-      </div>
+      <div class="brand"><span>Glamtreasure Admin</span></div>
       <div class="actions-row">
         <a class="btn secondary" href="manage.html">Manage Site</a>
         <a class="btn secondary" href="index.html">Analysis</a>
@@ -22,36 +20,26 @@
 
   <main class="container" style="padding:2rem 0;">
     <div class="card" style="margin-bottom:1.2rem;">
-      <h2>Bookings & COD Orders</h2>
-      <p class="small">Shows customer info, address, and items once a booking is created.</p>
-      <div style="margin:0.6rem 0 0.2rem;">
-        <button class="btn secondary" type="button" data-enable-push>Enable Notifications</button>
-        <button class="btn secondary" type="button" data-test-push>Test Notification</button>
-      </div>
-      <p class="small">Enable notifications on each device (PC/phone) you want to receive alerts.</p>
-      <p class="small" data-push-status></p>
-      <p class="small" data-orders-status></p>
+      <h2>Stock Overview</h2>
+      <p class="small">See product image, stock left, active status, and last stock update. You can also update quantity directly here.</p>
+      <p class="notice">When a booking is placed successfully, product stock is reduced by the ordered quantity.</p>
+      <p class="small" id="stock-status"></p>
     </div>
 
     <div class="card">
       <div style="overflow:auto;">
-        <table class="table">
+        <table class="table" id="stock-table">
           <thead>
             <tr>
-              <th>Order</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Contact</th>
-              <th>Address</th>
-              <th>Items</th>
-              <th>Total</th>
+              <th>Image</th>
+              <th>Product</th>
+              <th>Stock Left</th>
+              <th>Last Updated</th>
               <th>Status</th>
-              <th>Payment</th>
-              <th>Tracking</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody data-orders-body></tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -59,12 +47,10 @@
 
   <script defer src="https://pushrelay.com/pixel/PCV4Lj58BPsG6VDC"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/tracking.js"></script>
   <script src="js/config.js"></script>
   <script src="js/supabase.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/admin.js"></script>
-  <script src="js/push.js"></script>
-  <script src="js/orders.js"></script>
+  <script src="js/stocks.js"></script>
 </body>
 </html>

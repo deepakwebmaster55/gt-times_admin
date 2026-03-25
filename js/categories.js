@@ -63,23 +63,26 @@ const clearCategoryForm = () => {
 const loadCategories = async () => {
   window.setAdminLoading?.(true);
   window.renderSkeletonRows?.(categoryTableBody, 4, 4);
-  if (!window.gtSupabase1) {
-    setCategoryStatus("Supabase 1 keys missing in admin/js/config.js");
-    return;
-  }
-  const { data, error } = await window.gtSupabase1
-    .from("categories")
-    .select("*")
-    .order("name", { ascending: true });
+  try {
+    if (!window.gtSupabase1) {
+      setCategoryStatus("Supabase 1 keys missing in admin/js/config.js");
+      return;
+    }
+    const { data, error } = await window.gtSupabase1
+      .from("categories")
+      .select("*")
+      .order("name", { ascending: true });
 
-  if (error) {
-    setCategoryStatus(error.message);
-    return;
-  }
+    if (error) {
+      setCategoryStatus(error.message);
+      return;
+    }
 
-  renderCategories(data || []);
-  window.setAdminLoading?.(false);
-  populateAssignSelect(data || []);
+    renderCategories(data || []);
+    populateAssignSelect(data || []);
+  } finally {
+    window.setAdminLoading?.(false);
+  }
 };
 
 const renderCategories = (categories) => {

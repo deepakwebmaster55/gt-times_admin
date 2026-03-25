@@ -68,19 +68,12 @@ const loadOffers = async () => {
   window.setAdminLoading?.(true);
   window.renderSkeletonRows?.(offerTableBody, 4, 4);
   try {
-    if (!window.gtSupabase2) {
-      setOfferStatus("Supabase 2 keys missing in admin/js/config.js");
+    if (!window.callSupabase2AdminFunction) {
+      setOfferStatus("Supabase 2 function helper missing.");
       return;
     }
-    const { data, error } = await window.gtSupabase2
-      .from("offers")
-      .select("*")
-      .order("updated_at", { ascending: false });
-
-    if (error) {
-      setOfferStatus(error.message);
-      return;
-    }
+    const response = await window.callSupabase2AdminFunction("admin-offers", { action: "list" });
+    const data = response?.offers || [];
 
     offerTableBody.innerHTML = "";
     (data || []).forEach((offer) => {
@@ -102,19 +95,15 @@ const loadOffers = async () => {
     offerTableBody.querySelectorAll("[data-edit]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-edit");
-        const { data: row, error: rowError } = await window.gtSupabase2
-          .from("offers")
-          .select("*")
-          .eq("id", id)
-          .single();
-        if (rowError) {
-          setOfferStatus(rowError.message);
+        const response = await window.callSupabase2AdminFunction("admin-offers", { action: "get", id });
+        const row = response?.offer;
+        if (!row) {
+          setOfferStatus("Offer not found.");
           return;
         }
         document.querySelector("#offer-id").value = row.id || "";
         document.querySelector("#offer-title").value = row.title || "";
         document.querySelector("#offer-description").value = row.description || "";
-        document.querySelector("#offer-badge").value = row.badge || "";
         document.querySelector("#offer-code").value = row.code || "";
         offerTypeSelect.value = row.type || "discount";
         document.querySelector("#offer-active").checked = row.is_active !== false;
@@ -147,6 +136,12 @@ const loadOffers = async () => {
         }
       });
     });
+
+    if (!data.length) {
+      setOfferStatus("No offers found.");
+    } else {
+      setOfferStatus(`${data.length} offer(s) loaded.`);
+    }
   } finally {
     window.setAdminLoading?.(false);
   }
@@ -182,7 +177,6 @@ if (offerForm) {
       id: document.querySelector("#offer-id").value || undefined,
       title: document.querySelector("#offer-title").value.trim(),
       description: document.querySelector("#offer-description").value.trim(),
-      badge: document.querySelector("#offer-badge").value.trim(),
       code: document.querySelector("#offer-code").value.trim(),
       type,
       rules,
@@ -200,10 +194,10 @@ if (offerForm) {
         action: "upsert",
         offer: payload
       });
+      resetOfferForm();
+      await loadOffers();
       setOfferStatus("Offer saved.");
       window.showToast?.("Offer saved.");
-      resetOfferForm();
-      loadOffers();
     } catch (error) {
       setOfferStatus(error.message || "Save failed.");
     } finally {

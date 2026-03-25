@@ -7,6 +7,8 @@ const galleryInput = document.querySelector("#gallery-images");
 const mainImageStatus = document.querySelector("#main-image-status");
 const galleryStatus = document.querySelector("#gallery-status");
 const imagePreviewList = document.querySelector("#image-preview-list");
+const mainImagePreview = document.querySelector("#main-image-preview");
+const galleryImagePreview = document.querySelector("#gallery-image-preview");
 const customFieldsWrap = document.querySelector("#custom-fields");
 const addCustomFieldBtn = document.querySelector("#add-custom-field");
 const colorImageFields = document.querySelector("#color-image-fields");
@@ -19,8 +21,24 @@ const homeSectionsHiddenInput = document.querySelector("#home_sections");
 const homeSectionsSelect = document.querySelector("#home-sections-select");
 const homeSectionTags = document.querySelector("#home-section-tags");
 const addSectionTagBtn = document.querySelector("#add-section-tag");
+const productSizeEstimateEl = document.querySelector("#product-size-estimate");
+const cropperModal = document.querySelector("#image-cropper-modal");
+const cropperStage = document.querySelector("#cropper-stage");
+const cropperImage = document.querySelector("#cropper-image");
+const cropperZoom = document.querySelector("#cropper-zoom");
+const cropperApplyBtn = document.querySelector("#cropper-apply");
+const cropperCancelBtn = document.querySelector("#cropper-cancel");
+const cropperCancelTopBtn = document.querySelector("#cropper-cancel-top");
+const cropperResetBtn = document.querySelector("#cropper-reset");
+const cropperRatioButtons = Array.from(document.querySelectorAll("[data-crop-ratio]"));
 
 const STORAGE_BUCKET = "product-images";
+const MAX_TOTAL_IMAGES = 5;
+const MAX_GALLERY_IMAGES = MAX_TOTAL_IMAGES - 1;
+const CROP_PRESETS = {
+  showcase: { label: "Showcase / Hero", ratio: 14 / 9 },
+  card: { label: "Product Card", ratio: 4 / 3 }
+};
 
 let mainImageUrl = "";
 let galleryUrls = [];
@@ -29,6 +47,12 @@ let colorImageMap = {};
 let categoriesCache = [];
 let selectedCategories = [];
 let selectedHomeSections = [];
+let mediaSizeBytes = {
+  main: 0,
+  gallery: [],
+  colors: {}
+};
+let cropperSession = null;
 
 const parseList = (value) =>
   value
@@ -52,6 +76,19 @@ const setMainStatus = (message) => {
 
 const setGalleryStatus = (message) => {
   if (galleryStatus) galleryStatus.textContent = message;
+};
+
+const formatBytes = (value) => {
+  const bytes = Number(value || 0);
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 };
 
 const updateTagHiddenInput = (target, values) => {
@@ -96,8 +133,11 @@ const addCategoryTag = (value) => {
       selectedCategories.splice(idx, 1);
       updateTagHiddenInput(categoryHiddenInput, selectedCategories);
       renderTagList(categoryTags, selectedCategories, () => {});
+      updateProductSizeEstimate();
     });
+    updateProductSizeEstimate();
   });
+  updateProductSizeEstimate();
 };
 
 const addHomeSectionTag = (value) => {
@@ -113,8 +153,11 @@ const addHomeSectionTag = (value) => {
       selectedHomeSections.splice(idx, 1);
       updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
       renderTagList(homeSectionTags, selectedHomeSections, () => {});
+      updateProductSizeEstimate();
     });
+    updateProductSizeEstimate();
   });
+  updateProductSizeEstimate();
 };
 
 const sanitizeFileName = (name) => name.replace(/[^a-z0-9._-]/gi, "_");
@@ -126,6 +169,161 @@ const isAllowedImage = (file) => {
   const name = (file.name || "").toLowerCase();
   return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".webp");
 };
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const getCropPreset = (key) => CROP_PRESETS[key] || CROP_PRESETS.showcase;
+
+const renderCropRatioButtons = (activeKey) => {
+  cropperRatioButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.getAttribute("data-crop-ratio") === activeKey);
+  });
+};
+
+const applyCropLayout = () => {
+  if (!cropperSession || !cropperStage) return;
+  const preset = getCropPreset(cropperSession.ratioKey);
+  cropperStage.style.aspectRatio = String(preset.ratio);
+};
+
+const resetCropperView = () => {
+  if (!cropperSession || !cropperStage) return;
+  const preset = getCropPreset(cropperSession.ratioKey);
+  const stageRect = cropperStage.getBoundingClientRect();
+  const stageWidth = stageRect.width || 700;
+  const stageHeight = stageRect.height || Math.round(stageWidth / preset.ratio);
+  const baseScale = Math.max(stageWidth / cropperSession.image.naturalWidth, stageHeight / cropperSession.image.naturalHeight);
+  cropperSession.baseWidth = cropperSession.image.naturalWidth * baseScale;
+  cropperSession.baseHeight = cropperSession.image.naturalHeight * baseScale;
+  cropperSession.displayWidth = cropperSession.baseWidth;
+  cropperSession.displayHeight = cropperSession.baseHeight;
+  cropperSession.zoom = 1;
+  cropperSession.stageWidth = stageWidth;
+  cropperSession.stageHeight = stageHeight;
+  cropperSession.offsetX = (stageWidth - cropperSession.displayWidth) / 2;
+  cropperSession.offsetY = (stageHeight - cropperSession.displayHeight) / 2;
+  if (cropperZoom) cropperZoom.value = "1";
+  renderCropRatioButtons(cropperSession.ratioKey);
+  clampCropperOffsets();
+};
+
+const updateCropperTransform = () => {
+  if (!cropperSession || !cropperImage) return;
+  cropperImage.style.width = `${cropperSession.displayWidth}px`;
+  cropperImage.style.height = `${cropperSession.displayHeight}px`;
+  cropperImage.style.transform = `translate(${cropperSession.offsetX}px, ${cropperSession.offsetY}px)`;
+};
+
+const clampCropperOffsets = () => {
+  if (!cropperSession || !cropperStage) return;
+  const stageRect = cropperStage.getBoundingClientRect();
+  cropperSession.stageWidth = stageRect.width;
+  cropperSession.stageHeight = stageRect.height;
+  const minX = Math.min(0, cropperSession.stageWidth - cropperSession.displayWidth);
+  const minY = Math.min(0, cropperSession.stageHeight - cropperSession.displayHeight);
+  cropperSession.offsetX = clamp(cropperSession.offsetX, minX, 0);
+  cropperSession.offsetY = clamp(cropperSession.offsetY, minY, 0);
+  updateCropperTransform();
+};
+
+const closeCropper = () => {
+  if (!cropperSession) return;
+  if (cropperSession.objectUrl) URL.revokeObjectURL(cropperSession.objectUrl);
+  cropperSession = null;
+  if (cropperModal) {
+    cropperModal.classList.add("hidden");
+    cropperModal.setAttribute("aria-hidden", "true");
+  }
+  if (cropperImage) {
+    cropperImage.removeAttribute("src");
+    cropperImage.style.transform = "";
+    cropperImage.style.width = "";
+    cropperImage.style.height = "";
+  }
+  if (cropperZoom) cropperZoom.value = "1";
+  cropperStage?.classList.remove("is-dragging");
+};
+
+const setCropperZoom = (nextZoom, anchorX, anchorY) => {
+  if (!cropperSession || !cropperStage) return;
+  const stageRect = cropperStage.getBoundingClientRect();
+  const pointerX = Number.isFinite(anchorX) ? anchorX : stageRect.width / 2;
+  const pointerY = Number.isFinite(anchorY) ? anchorY : stageRect.height / 2;
+  const prevWidth = cropperSession.displayWidth;
+  const prevHeight = cropperSession.displayHeight;
+  const ratioX = prevWidth ? (pointerX - cropperSession.offsetX) / prevWidth : 0.5;
+  const ratioY = prevHeight ? (pointerY - cropperSession.offsetY) / prevHeight : 0.5;
+  cropperSession.zoom = clamp(nextZoom, 1, 3);
+  cropperSession.displayWidth = cropperSession.baseWidth * cropperSession.zoom;
+  cropperSession.displayHeight = cropperSession.baseHeight * cropperSession.zoom;
+  cropperSession.offsetX = pointerX - (cropperSession.displayWidth * ratioX);
+  cropperSession.offsetY = pointerY - (cropperSession.displayHeight * ratioY);
+  clampCropperOffsets();
+};
+
+const exportCroppedFile = async () => {
+  if (!cropperSession) return null;
+  const { image, offsetX, offsetY, displayWidth, displayHeight, stageWidth, stageHeight, file } = cropperSession;
+  const scaleX = displayWidth / image.naturalWidth;
+  const scaleY = displayHeight / image.naturalHeight;
+  const srcX = clamp((0 - offsetX) / scaleX, 0, image.naturalWidth - 1);
+  const srcY = clamp((0 - offsetY) / scaleY, 0, image.naturalHeight - 1);
+  const srcW = clamp(stageWidth / scaleX, 1, image.naturalWidth - srcX);
+  const srcH = clamp(stageHeight / scaleY, 1, image.naturalHeight - srcY);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(srcW));
+  canvas.height = Math.max(1, Math.round(srcH));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(image, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.96));
+  if (!blob) return null;
+  return new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: "image/webp" });
+};
+
+const openCropper = (file, ratioKey = "showcase") => new Promise((resolve) => {
+  if (!cropperModal || !cropperStage || !cropperImage || !cropperZoom) {
+    resolve(file);
+    return;
+  }
+  const objectUrl = URL.createObjectURL(file);
+  const previewImage = new Image();
+  previewImage.onload = () => {
+    cropperModal.classList.remove("hidden");
+    cropperModal.setAttribute("aria-hidden", "false");
+    cropperSession = {
+      resolve,
+      objectUrl,
+      file,
+      image: previewImage,
+      ratioKey,
+      baseWidth: 0,
+      baseHeight: 0,
+      displayWidth: 0,
+      displayHeight: 0,
+      stageWidth: 0,
+      stageHeight: 0,
+      zoom: 1,
+      offsetX: 0,
+      offsetY: 0,
+      dragPointerId: null,
+      dragStartX: 0,
+      dragStartY: 0,
+      startOffsetX: 0,
+      startOffsetY: 0
+    };
+    applyCropLayout();
+    cropperImage.src = objectUrl;
+    resetCropperView();
+  };
+  previewImage.onerror = () => {
+    URL.revokeObjectURL(objectUrl);
+    resolve(null);
+  };
+  previewImage.src = objectUrl;
+});
 
 const fileToWebp = async (file) => {
   if (!file) return null;
@@ -169,15 +367,15 @@ const fileToWebp = async (file) => {
 };
 
 const uploadToStorage = async (file, slug) => {
-  if (!window.gtSupabase1) return "";
+  if (!window.gtSupabase1) return { url: "", size: 0 };
   if (!isAllowedImage(file)) {
     setStatus("Only PNG, JPG/JPEG, or WEBP images are allowed.");
-    return "";
+    return { url: "", size: 0 };
   }
   const webpFile = await fileToWebp(file);
   if (!webpFile) {
     setStatus("Image conversion failed. Please try another image.");
-    return "";
+    return { url: "", size: 0 };
   }
   const fileName = sanitizeFileName(webpFile.name);
   const path = `products/${slug}/${Date.now()}_${fileName}`;
@@ -188,10 +386,20 @@ const uploadToStorage = async (file, slug) => {
   });
   if (error) {
     setStatus(error.message);
-    return "";
+    return { url: "", size: 0 };
   }
   const { data } = window.gtSupabase1.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  return data?.publicUrl || "";
+  return {
+    url: data?.publicUrl || "",
+    size: Number(webpFile.size || 0)
+  };
+};
+
+const prepareImageForUpload = async (file, ratioKey) => {
+  const croppedFile = await openCropper(file, ratioKey);
+  if (!croppedFile) return null;
+  if (croppedFile.type === "image/webp") return croppedFile;
+  return fileToWebp(croppedFile);
 };
 
 const renderImageList = () => {
@@ -215,9 +423,23 @@ const renderImageList = () => {
     btn.addEventListener("click", () => {
       const index = Number(btn.getAttribute("data-remove-gallery"));
       galleryUrls = galleryUrls.filter((_, i) => i !== index);
+      mediaSizeBytes.gallery = mediaSizeBytes.gallery.filter((_, i) => i !== index);
       renderImageList();
+      updateProductSizeEstimate();
     });
   });
+
+  if (mainImagePreview) {
+    mainImagePreview.innerHTML = mainImageUrl
+      ? `<div class="admin-thumb"><img src="${mainImageUrl}" alt="Main image preview" /><span>Main</span></div>`
+      : "<span class=\"small\">Main image preview will appear here.</span>";
+  }
+
+  if (galleryImagePreview) {
+    galleryImagePreview.innerHTML = galleryUrls.length
+      ? galleryUrls.map((url, index) => `<div class="admin-thumb"><img src="${url}" alt="Gallery preview ${index + 1}" /><span>G${index + 1}</span></div>`).join("")
+      : "<span class=\"small\">Gallery previews will appear here.</span>";
+  }
 };
 
 const renderCustomFields = () => {
@@ -243,7 +465,13 @@ const renderCustomFields = () => {
       const index = Number(btn.getAttribute("data-remove-custom"));
       customFields = customFields.filter((_, i) => i !== index);
       renderCustomFields();
+      updateProductSizeEstimate();
     });
+  });
+
+  customFieldsWrap.querySelectorAll("[data-custom-label], [data-custom-value]").forEach((input) => {
+    input.addEventListener("input", updateProductSizeEstimate);
+    input.addEventListener("change", updateProductSizeEstimate);
   });
 };
 
@@ -295,13 +523,21 @@ const renderColorImageFields = (colors) => {
         return;
       }
       const slug = document.querySelector("#slug").value.trim() || "product";
-      setStatus(`Uploading ${color} image...`);
-      const url = await uploadToStorage(input.files[0], slug);
-      if (url) {
-        colorImageMap[color] = url;
+      setStatus(`Crop and upload ${color} image...`);
+      const preparedFile = await prepareImageForUpload(input.files[0], "card");
+      if (!preparedFile) {
+        setStatus(`${color} image crop canceled.`);
+        input.value = "";
+        return;
+      }
+      const upload = await uploadToStorage(preparedFile, slug);
+      if (upload.url) {
+        colorImageMap[color] = upload.url;
+        mediaSizeBytes.colors[color] = upload.size;
         renderColorImageFields(list);
         renderImageList();
         window.showToast?.(`${color} image uploaded`);
+        updateProductSizeEstimate();
       }
     });
   });
@@ -319,14 +555,50 @@ const readCustomFields = () => {
   }).filter((item) => item.label && item.value);
 };
 
+const getDraftPayload = () => ({
+  id: document.querySelector("#product-id")?.value || undefined,
+  title: document.querySelector("#title")?.value.trim() || "",
+  slug: document.querySelector("#slug")?.value.trim() || "",
+  subtitle: document.querySelector("#subtitle")?.value.trim() || "",
+  category: categoryHiddenInput?.value.trim() || "",
+  price: Number(document.querySelector("#price")?.value || 0),
+  old_price: Number(document.querySelector("#old_price")?.value || 0),
+  rating: Number(document.querySelector("#rating")?.value || 0),
+  badge: document.querySelector("#badge")?.value.trim() || "",
+  short_desc: document.querySelector("#short_desc")?.value.trim() || "",
+  description: document.querySelector("#description")?.value.trim() || "",
+  stock: document.querySelector("#stock")?.value.trim() || "",
+  stock_quantity: Math.max(0, Number(document.querySelector("#stock_quantity")?.value || 0)),
+  images: mainImageUrl ? [mainImageUrl] : [],
+  gallery: galleryUrls.filter((url) => url && url !== mainImageUrl),
+  colors: parseList(document.querySelector("#colors")?.value || ""),
+  home_sections: parseList(homeSectionsHiddenInput?.value || ""),
+  specs: readCustomFields(),
+  color_images: colorImageMap,
+  is_active: document.querySelector("#is_active")?.checked === true
+});
+
+const updateProductSizeEstimate = () => {
+  if (!productSizeEstimateEl) return;
+  const payloadBytes = new TextEncoder().encode(JSON.stringify(getDraftPayload())).length;
+  const galleryBytes = mediaSizeBytes.gallery.reduce((sum, size) => sum + Number(size || 0), 0);
+  const colorBytes = Object.values(mediaSizeBytes.colors).reduce((sum, size) => sum + Number(size || 0), 0);
+  const totalBytes = payloadBytes + Number(mediaSizeBytes.main || 0) + galleryBytes + colorBytes;
+  productSizeEstimateEl.textContent = `Estimated product size: ${formatBytes(totalBytes)} (data + images)`;
+};
+
 const clearForm = () => {
   productForm.reset();
   document.querySelector("#product-id").value = "";
   document.querySelector("#is_active").checked = true;
+  if (document.querySelector("#stock_quantity")) {
+    document.querySelector("#stock_quantity").value = "0";
+  }
   mainImageUrl = "";
   galleryUrls = [];
   customFields = [];
   colorImageMap = {};
+  mediaSizeBytes = { main: 0, gallery: [], colors: {} };
   selectedCategories = [];
   selectedHomeSections = [];
   if (mainImageInput) mainImageInput.value = "";
@@ -338,6 +610,7 @@ const clearForm = () => {
   updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
   renderTagList(categoryTags, selectedCategories, () => {});
   renderTagList(homeSectionTags, selectedHomeSections, () => {});
+  updateProductSizeEstimate();
 };
 
 const loadProducts = async () => {
@@ -382,14 +655,17 @@ const loadCategories = async () => {
 const renderProducts = (products) => {
   productTableBody.innerHTML = "";
   products.forEach((product) => {
+    const stockQuantity = Number(product.stock_quantity || 0);
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${product.title || ""}</td>
       <td>${product.category || ""}</td>
+      <td>${stockQuantity}</td>
       <td><span class="badge">${product.is_active ? "Active" : "Inactive"}</span></td>
       <td>
         <div class="actions-row">
           <button class="btn secondary" data-edit="${product.id}">Edit</button>
+          <button class="btn secondary" data-toggle-active="${product.id}" data-next-active="${product.is_active ? "false" : "true"}">${product.is_active ? "Deactivate" : "Activate"}</button>
           <button class="btn link" data-delete="${product.id}">Delete</button>
         </div>
       </td>
@@ -425,6 +701,26 @@ const renderProducts = (products) => {
       loadProducts();
     });
   });
+
+  productTableBody.querySelectorAll("[data-toggle-active]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-toggle-active");
+      const nextActive = btn.getAttribute("data-next-active") === "true";
+      const { error } = await window.gtSupabase1
+        .from("products")
+        .update({
+          is_active: nextActive,
+          stock_updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+      if (error) {
+        setStatus(error.message);
+        return;
+      }
+      setStatus(nextActive ? "Product activated." : "Product deactivated.");
+      loadProducts();
+    });
+  });
 };
 
 const normalizeSpecs = (specs) => {
@@ -449,15 +745,17 @@ const fillForm = (product) => {
   document.querySelector("#short_desc").value = product.short_desc || "";
   document.querySelector("#description").value = product.description || "";
   document.querySelector("#stock").value = product.stock || "";
+  document.querySelector("#stock_quantity").value = Number(product.stock_quantity || 0);
   document.querySelector("#colors").value = normalizeList(product.colors).join(", ");
   selectedHomeSections = normalizeList(product.home_sections);
   updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
   document.querySelector("#is_active").checked = product.is_active !== false;
 
   mainImageUrl = (product.images || [])[0] || "";
-  galleryUrls = product.gallery || [];
+  galleryUrls = normalizeList(product.gallery).filter((url) => url && url !== mainImageUrl);
   customFields = normalizeSpecs(product.specs);
   colorImageMap = normalizeColorImages(product.color_images);
+  mediaSizeBytes = { main: 0, gallery: [], colors: {} };
   renderImageList();
   renderCustomFields();
   renderColorImageFields(parseList(document.querySelector("#colors").value));
@@ -471,6 +769,7 @@ const fillForm = (product) => {
     updateTagHiddenInput(homeSectionsHiddenInput, selectedHomeSections);
     renderTagList(homeSectionTags, selectedHomeSections, () => {});
   });
+  updateProductSizeEstimate();
 };
 
 if (mainImageInput) {
@@ -481,17 +780,23 @@ if (mainImageInput) {
       return;
     }
     const slug = document.querySelector("#slug").value.trim() || "product";
-    setMainStatus("Converting to WEBP...");
-    const url = await uploadToStorage(mainImageInput.files[0], slug);
-    if (url) {
-      mainImageUrl = url;
-      if (!galleryUrls.includes(url)) {
-        galleryUrls = [url, ...galleryUrls];
-      }
+    setMainStatus("Crop and upload main image...");
+    const preparedFile = await prepareImageForUpload(mainImageInput.files[0], "showcase");
+    if (!preparedFile) {
+      setMainStatus("Image crop canceled.");
+      mainImageInput.value = "";
+      return;
+    }
+    const upload = await uploadToStorage(preparedFile, slug);
+    if (upload.url) {
+      mainImageUrl = upload.url;
+      mediaSizeBytes.main = upload.size;
       setMainStatus("Main image uploaded.");
       window.showToast?.("Main image uploaded");
     }
+    mainImageInput.value = "";
     renderImageList();
+    updateProductSizeEstimate();
   });
 }
 
@@ -505,19 +810,26 @@ if (galleryInput) {
       setGalleryStatus("Only PNG, JPG/JPEG, or WEBP images are allowed.");
       return;
     }
-    const files = allFiles.slice(0, 5 - galleryUrls.length);
+    const files = allFiles.slice(0, MAX_GALLERY_IMAGES - galleryUrls.length);
     if (!files.length) {
-      setGalleryStatus("Gallery limit reached (5 images). Remove one to add more.");
+      setGalleryStatus(`Gallery limit reached (${MAX_GALLERY_IMAGES} gallery images, ${MAX_TOTAL_IMAGES} total including main). Remove one to add more.`);
       return;
     }
-    setGalleryStatus("Converting to WEBP...");
+    setGalleryStatus("Crop and upload gallery images...");
     for (const file of files) {
-      const url = await uploadToStorage(file, slug);
-      if (url) galleryUrls.push(url);
+      const preparedFile = await prepareImageForUpload(file, "card");
+      if (!preparedFile) continue;
+      const upload = await uploadToStorage(preparedFile, slug);
+      if (upload.url) {
+        galleryUrls.push(upload.url);
+        mediaSizeBytes.gallery.push(upload.size);
+      }
     }
     setGalleryStatus("Gallery updated.");
     window.showToast?.("Gallery updated");
+    galleryInput.value = "";
     renderImageList();
+    updateProductSizeEstimate();
   });
 }
 
@@ -530,8 +842,12 @@ if (colorsInput) {
       if (colorImageMap[key]) nextMap[key] = colorImageMap[key];
     });
     colorImageMap = nextMap;
+    mediaSizeBytes.colors = Object.fromEntries(
+      Object.entries(mediaSizeBytes.colors).filter(([color]) => nextMap[color])
+    );
     renderColorImageFields(list);
     renderImageList();
+    updateProductSizeEstimate();
   });
 }
 
@@ -581,8 +897,10 @@ if (productForm) {
       short_desc: document.querySelector("#short_desc").value.trim(),
       description: document.querySelector("#description").value.trim(),
       stock: document.querySelector("#stock").value.trim(),
+      stock_quantity: Math.max(0, Number(document.querySelector("#stock_quantity").value || 0)),
+      stock_updated_at: new Date().toISOString(),
       images: mainImageUrl ? [mainImageUrl] : [],
-      gallery: [mainImageUrl, ...galleryUrls.filter((url) => url && url !== mainImageUrl)].filter(Boolean),
+      gallery: galleryUrls.filter((url) => url && url !== mainImageUrl),
       colors: parseList(document.querySelector("#colors").value),
       home_sections: parseList(homeSectionsHiddenInput?.value || ""),
       specs: readCustomFields(),
@@ -608,6 +926,96 @@ if (productForm) {
   });
 }
 
+if (cropperZoom) {
+  cropperZoom.addEventListener("input", () => {
+    setCropperZoom(Number(cropperZoom.value || 1));
+  });
+}
+
+cropperRatioButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    if (!cropperSession) return;
+    cropperSession.ratioKey = button.getAttribute("data-crop-ratio") || "showcase";
+    applyCropLayout();
+    resetCropperView();
+  });
+});
+
+if (cropperStage) {
+  cropperStage.addEventListener("pointerdown", (event) => {
+    if (!cropperSession) return;
+    cropperSession.dragPointerId = event.pointerId;
+    cropperSession.dragStartX = event.clientX;
+    cropperSession.dragStartY = event.clientY;
+    cropperSession.startOffsetX = cropperSession.offsetX;
+    cropperSession.startOffsetY = cropperSession.offsetY;
+    cropperStage.classList.add("is-dragging");
+    cropperStage.setPointerCapture?.(event.pointerId);
+  });
+
+  cropperStage.addEventListener("pointermove", (event) => {
+    if (!cropperSession || cropperSession.dragPointerId !== event.pointerId) return;
+    cropperSession.offsetX = cropperSession.startOffsetX + (event.clientX - cropperSession.dragStartX);
+    cropperSession.offsetY = cropperSession.startOffsetY + (event.clientY - cropperSession.dragStartY);
+    clampCropperOffsets();
+  });
+
+  const endCropDrag = (event) => {
+    if (!cropperSession || cropperSession.dragPointerId !== event.pointerId) return;
+    cropperSession.dragPointerId = null;
+    cropperStage.classList.remove("is-dragging");
+    cropperStage.releasePointerCapture?.(event.pointerId);
+  };
+
+  cropperStage.addEventListener("pointerup", endCropDrag);
+  cropperStage.addEventListener("pointercancel", endCropDrag);
+  cropperStage.addEventListener("wheel", (event) => {
+    if (!cropperSession) return;
+    event.preventDefault();
+    const stageRect = cropperStage.getBoundingClientRect();
+    const anchorX = event.clientX - stageRect.left;
+    const anchorY = event.clientY - stageRect.top;
+    const nextZoom = Number(cropperZoom?.value || cropperSession.zoom) + (event.deltaY < 0 ? 0.08 : -0.08);
+    if (cropperZoom) cropperZoom.value = String(clamp(nextZoom, 1, 3));
+    setCropperZoom(nextZoom, anchorX, anchorY);
+  }, { passive: false });
+}
+
+if (cropperApplyBtn) {
+  cropperApplyBtn.addEventListener("click", async () => {
+    if (!cropperSession) return;
+    const resolver = cropperSession.resolve;
+    const croppedFile = await exportCroppedFile();
+    closeCropper();
+    resolver(croppedFile);
+  });
+}
+
+if (cropperResetBtn) {
+  cropperResetBtn.addEventListener("click", () => {
+    if (!cropperSession) return;
+    applyCropLayout();
+    resetCropperView();
+  });
+}
+
+[cropperCancelBtn, cropperCancelTopBtn].forEach((button) => {
+  if (!button) return;
+  button.addEventListener("click", () => {
+    if (!cropperSession) return;
+    const resolver = cropperSession.resolve;
+    closeCropper();
+    resolver(null);
+  });
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !cropperSession) return;
+  const resolver = cropperSession.resolve;
+  closeCropper();
+  resolver(null);
+});
+
 renderImageList();
 renderCustomFields();
 renderColorImageFields(parseList(colorsInput?.value || ""));
@@ -623,3 +1031,11 @@ renderTagList(homeSectionTags, selectedHomeSections, (index) => {
 });
 loadCategories();
 loadProducts();
+updateProductSizeEstimate();
+
+if (productForm) {
+  productForm.querySelectorAll("input, textarea, select").forEach((field) => {
+    field.addEventListener("input", updateProductSizeEstimate);
+    field.addEventListener("change", updateProductSizeEstimate);
+  });
+}
